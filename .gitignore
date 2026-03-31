@@ -1,3 +1,4 @@
 logs/
 .env
 configs/config.env.yaml
+.DS_Store
