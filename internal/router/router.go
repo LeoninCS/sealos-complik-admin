@@ -4,6 +4,7 @@ import (
 	"sealos-complik-admin/internal/modules/ban"
 	"sealos-complik-admin/internal/modules/commitment"
 	"sealos-complik-admin/internal/modules/projectconfig"
+	"sealos-complik-admin/internal/modules/unban"
 	"sealos-complik-admin/internal/modules/violation"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ func InitRouter() *gin.Engine {
 	ban.InitBanRoutes(g)
 	commitment.InitCommitmentRoutes(g)
 	projectconfig.InitProjectConfigRoutes(g)
+	unban.InitUnbanRoutes(g)
 	violation.InitViolationRoutes(g)
 
 	return g
