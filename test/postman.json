@@ -1,0 +1,279 @@
+{
+  "info": {
+    "_postman_id": "4bba2f6c-50b2-45e8-ae1c-f39ec5480d96",
+    "name": "Sealos Complik Admin API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for the sealos-complik-admin service."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "config_name",
+      "value": "project-config-demo",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Check whether the service is running."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Project Config",
+      "item": [
+        {
+          "name": "Create Project Config",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"project config created successfully\");",
+                  "});",
+                  "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "pm.collectionVariables.set(\"config_name\", requestData.config_name);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"config_name\": \"project-config-{{$timestamp}}\",\n  \"config_type\": \"yaml\",\n  \"config_value\": {\n    \"replicas\": 2,\n    \"image\": \"nginx:1.27\",\n    \"env\": {\n      \"APP_ENV\": \"dev\"\n    }\n  },\n  \"description\": \"sample project config created from postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/configs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "configs"
+              ]
+            },
+            "description": "Create a new project configuration."
+          },
+          "response": []
+        },
+        {
+          "name": "List Project Configs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response is array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.length > 0) {",
+                  "    pm.collectionVariables.set(\"config_name\", jsonData[jsonData.length - 1].config_name);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/configs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "configs"
+              ]
+            },
+            "description": "List all project configurations."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Project Config",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/configs/{{config_name}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "configs",
+                "{{config_name}}"
+              ]
+            },
+            "description": "Get a project configuration by config name."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Project Config",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"project config updated successfully\");",
+                  "});",
+                  "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "pm.collectionVariables.set(\"config_name\", requestData.config_name);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"config_name\": \"{{config_name}}\",\n  \"config_type\": \"yaml\",\n  \"config_value\": {\n    \"replicas\": 3,\n    \"image\": \"nginx:1.27.1\",\n    \"env\": {\n      \"APP_ENV\": \"prod\"\n    }\n  },\n  \"description\": \"updated from postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/configs/{{config_name}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "configs",
+                "{{config_name}}"
+              ]
+            },
+            "description": "Update a project configuration by config name."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Project Config",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"project config deleted successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/configs/{{config_name}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "configs",
+                "{{config_name}}"
+              ]
+            },
+            "description": "Delete a project configuration by config name."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
