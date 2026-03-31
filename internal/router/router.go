@@ -1,6 +1,7 @@
 package router
 
 import (
+	"sealos-complik-admin/internal/modules/ban"
 	"sealos-complik-admin/internal/modules/commitment"
 	"sealos-complik-admin/internal/modules/projectconfig"
 	"sealos-complik-admin/internal/modules/violation"
@@ -12,6 +13,7 @@ func InitRouter() *gin.Engine {
 	g := gin.Default()
 	g.GET("/health", HealthCheck)
 
+	ban.InitBanRoutes(g)
 	commitment.InitCommitmentRoutes(g)
 	projectconfig.InitProjectConfigRoutes(g)
 	violation.InitViolationRoutes(g)

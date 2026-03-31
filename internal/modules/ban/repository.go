@@ -1,0 +1,72 @@
+package ban
+
+import (
+	"context"
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type Repository struct {
+	db *gorm.DB
+}
+
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{db: db}
+}
+
+// CreateBan creates a new ban record.
+func (r *Repository) CreateBan(ctx context.Context, ban *Ban) error {
+	return r.db.WithContext(ctx).Create(ban).Error
+}
+
+// GetBansByUserID returns all ban records for the given user.
+func (r *Repository) GetBansByUserID(ctx context.Context, userID uint64) ([]Ban, error) {
+	var bans []Ban
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Order("ban_start_time DESC, id DESC").Find(&bans).Error; err != nil {
+		return nil, err
+	}
+	if len(bans) == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return bans, nil
+}
+
+// ListBans returns all ban records.
+func (r *Repository) ListBans(ctx context.Context) ([]Ban, error) {
+	var bans []Ban
+	if err := r.db.WithContext(ctx).Order("ban_start_time DESC, id DESC").Find(&bans).Error; err != nil {
+		return nil, err
+	}
+
+	return bans, nil
+}
+
+// DeleteBansByUserID deletes all ban records for the given user.
+func (r *Repository) DeleteBansByUserID(ctx context.Context, userID uint64) error {
+	result := r.db.WithContext(ctx).Where("user_id = ?", userID).Delete(&Ban{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// HasActiveBan reports whether the given user currently has any active ban records.
+func (r *Repository) HasActiveBan(ctx context.Context, userID uint64, now time.Time) (bool, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).
+		Model(&Ban{}).
+		Where("user_id = ?", userID).
+		Where("ban_start_time <= ?", now).
+		Where("ban_end_time IS NULL OR ban_end_time >= ?", now).
+		Count(&count).Error; err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
