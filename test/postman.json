@@ -15,6 +15,11 @@
       "key": "config_name",
       "value": "project-config-demo",
       "type": "string"
+    },
+    {
+      "key": "commitment_user_id",
+      "value": "1001",
+      "type": "string"
     }
   ],
   "item": [
@@ -49,6 +54,225 @@
               ]
             },
             "description": "Check whether the service is running."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Commitment",
+      "item": [
+        {
+          "name": "Create Commitment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"commitment created successfully\");",
+                  "});",
+                  "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "pm.collectionVariables.set(\"commitment_user_id\", requestData.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{$timestamp}},\n  \"file_name\": \"commitment-{{$timestamp}}.pdf\",\n  \"file_url\": \"https://oss.example.com/commitments/commitment-{{$timestamp}}.pdf\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/commitments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "commitments"
+              ]
+            },
+            "description": "Create a new commitment."
+          },
+          "response": []
+        },
+        {
+          "name": "List Commitments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response is array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.length > 0) {",
+                  "    pm.collectionVariables.set(\"commitment_user_id\", jsonData[jsonData.length - 1].user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/commitments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "commitments"
+              ]
+            },
+            "description": "List all commitments."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Commitment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/commitments/{{commitment_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "commitments",
+                "{{commitment_user_id}}"
+              ]
+            },
+            "description": "Get a commitment by user ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Commitment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"commitment updated successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"file_name\": \"commitment-updated-{{$timestamp}}.pdf\",\n  \"file_url\": \"https://oss.example.com/commitments/commitment-updated-{{$timestamp}}.pdf\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/commitments/{{commitment_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "commitments",
+                "{{commitment_user_id}}"
+              ]
+            },
+            "description": "Update a commitment by user ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Commitment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"commitment deleted successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/commitments/{{commitment_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "commitments",
+                "{{commitment_user_id}}"
+              ]
+            },
+            "description": "Delete a commitment by user ID."
           },
           "response": []
         }
