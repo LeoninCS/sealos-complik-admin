@@ -6,6 +6,7 @@ import (
 	"sealos-complik-admin/internal/infra/config"
 	"sealos-complik-admin/internal/infra/database"
 	"sealos-complik-admin/internal/infra/logger"
+	"sealos-complik-admin/internal/modules/projectconfig"
 	"sealos-complik-admin/internal/router"
 )
 
@@ -31,6 +32,10 @@ func main() {
 		appLogger.Fatalf("initialize database: %v", err)
 	}
 	defer database.CloseWithReport(appLogger.Printf)
+
+	if err := projectconfig.AutoMigrate(database.Get()); err != nil {
+		appLogger.Fatalf("auto migrate project config table: %v", err)
+	}
 
 	// Initialize router
 	srv := router.InitRouter()
