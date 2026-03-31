@@ -20,6 +20,11 @@
       "key": "commitment_user_id",
       "value": "1001",
       "type": "string"
+    },
+    {
+      "key": "violation_user_id",
+      "value": "2001",
+      "type": "string"
     }
   ],
   "item": [
@@ -494,6 +499,210 @@
               ]
             },
             "description": "Delete a project configuration by config name."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Violation",
+      "item": [
+        {
+          "name": "Create Violation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"violation created successfully\");",
+                  "});",
+                  "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "pm.collectionVariables.set(\"violation_user_id\", requestData.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{$timestamp}},\n  \"violation_type\": \"spam\",\n  \"violation_desc\": \"repeated spam messages\",\n  \"violation_time\": \"2026-03-31T10:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/violations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "violations"
+              ]
+            },
+            "description": "Create a new violation record."
+          },
+          "response": []
+        },
+        {
+          "name": "List Violations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response is array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.length > 0) {",
+                  "    pm.collectionVariables.set(\"violation_user_id\", jsonData[0].user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/violations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "violations"
+              ]
+            },
+            "description": "List all violation records."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Violations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response is array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/violations/{{violation_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "violations",
+                "{{violation_user_id}}"
+              ]
+            },
+            "description": "Get all violation records for a user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Violation Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{violation_user_id}}/violations-status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{violation_user_id}}",
+                "violations-status"
+              ]
+            },
+            "description": "Check whether a user has any violation records."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User Violations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"violations deleted successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/violations/{{violation_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "violations",
+                "{{violation_user_id}}"
+              ]
+            },
+            "description": "Delete all violation records for a user."
           },
           "response": []
         }
