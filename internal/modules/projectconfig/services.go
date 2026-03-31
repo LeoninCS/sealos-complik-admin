@@ -111,6 +111,7 @@ type normalizedProjectConfigInput struct {
 	Description string
 }
 
+// normalizeProjectConfigInput keeps create/update validation consistent.
 func normalizeProjectConfigInput(configName, configType string, configValue json.RawMessage, description string) (*normalizedProjectConfigInput, error) {
 	trimmedConfigName := strings.TrimSpace(configName)
 	trimmedConfigType := strings.TrimSpace(configType)
@@ -132,6 +133,7 @@ func normalizeProjectConfigInput(configName, configType string, configValue json
 	}, nil
 }
 
+// translateRepositoryError hides storage details from the handler layer.
 func translateRepositoryError(err error) error {
 	if err == nil {
 		return nil
@@ -149,6 +151,7 @@ func translateRepositoryError(err error) error {
 	return err
 }
 
+// toProjectConfigResponse intentionally omits the internal ID from API output.
 func toProjectConfigResponse(projectConfig *ProjectConfig) *ProjectConfigResponse {
 	return &ProjectConfigResponse{
 		ConfigName:  projectConfig.ConfigName,

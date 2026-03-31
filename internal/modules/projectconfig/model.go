@@ -9,6 +9,7 @@ import (
 )
 
 type ProjectConfig struct {
+	// ID remains the internal primary key for joins and stable references.
 	ID          uint64          `gorm:"primaryKey;autoIncrement" json:"id"`
 	ConfigName  string          `gorm:"size:255;not null;uniqueIndex" json:"config_name"`
 	ConfigType  string          `gorm:"size:50;not null" json:"config_type"`

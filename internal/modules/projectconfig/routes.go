@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// InitProjectConfigRoutes wires module dependencies and registers project config APIs.
 func InitProjectConfigRoutes(g *gin.Engine) {
 	repository := NewRepository(database.Get())
 	service := NewService(repository)
