@@ -9,7 +9,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
-	"sealos-complik-admin/internal/config"
+	"sealos-complik-admin/internal/infra/config"
 )
 
 const (

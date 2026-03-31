@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"sealos-complik-admin/internal/config"
-	"sealos-complik-admin/internal/database"
-	"sealos-complik-admin/internal/logger"
+	"sealos-complik-admin/internal/infra/config"
+	"sealos-complik-admin/internal/infra/database"
+	"sealos-complik-admin/internal/infra/logger"
 	"sealos-complik-admin/internal/router"
 )
 
