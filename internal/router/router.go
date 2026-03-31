@@ -1,6 +1,7 @@
 package router
 
 import (
+	"sealos-complik-admin/internal/modules/commitment"
 	"sealos-complik-admin/internal/modules/projectconfig"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +11,7 @@ func InitRouter() *gin.Engine {
 	g := gin.Default()
 	g.GET("/health", HealthCheck)
 
+	commitment.InitCommitmentRoutes(g)
 	projectconfig.InitProjectConfigRoutes(g)
 
 	return g
