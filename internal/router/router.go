@@ -3,6 +3,7 @@ package router
 import (
 	"sealos-complik-admin/internal/modules/commitment"
 	"sealos-complik-admin/internal/modules/projectconfig"
+	"sealos-complik-admin/internal/modules/violation"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +14,7 @@ func InitRouter() *gin.Engine {
 
 	commitment.InitCommitmentRoutes(g)
 	projectconfig.InitProjectConfigRoutes(g)
+	violation.InitViolationRoutes(g)
 
 	return g
 }

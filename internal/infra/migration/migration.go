@@ -5,6 +5,7 @@ import (
 
 	"sealos-complik-admin/internal/modules/commitment"
 	"sealos-complik-admin/internal/modules/projectconfig"
+	"sealos-complik-admin/internal/modules/violation"
 
 	"gorm.io/gorm"
 )
@@ -21,6 +22,7 @@ func AutoMigrate(db *gorm.DB) error {
 	}{
 		{name: "project config", run: projectconfig.AutoMigrate},
 		{name: "commitment", run: commitment.AutoMigrate},
+		{name: "violation", run: violation.AutoMigrate},
 	}
 
 	for _, migration := range migrations {
