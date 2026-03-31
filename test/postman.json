@@ -30,6 +30,11 @@
       "key": "ban_user_id",
       "value": "3001",
       "type": "string"
+    },
+    {
+      "key": "unban_user_id",
+      "value": "4001",
+      "type": "string"
     }
   ],
   "item": [
@@ -912,6 +917,176 @@
               ]
             },
             "description": "Delete all ban records for a user."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Unban",
+      "item": [
+        {
+          "name": "Create Unban",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"unban created successfully\");",
+                  "});",
+                  "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+                  "pm.collectionVariables.set(\"unban_user_id\", requestData.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{$timestamp}},\n  \"operator_name\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/unbans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "unbans"
+              ]
+            },
+            "description": "Create a new unban record."
+          },
+          "response": []
+        },
+        {
+          "name": "List Unbans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response is array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.length > 0) {",
+                  "    pm.collectionVariables.set(\"unban_user_id\", jsonData[0].user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/unbans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "unbans"
+              ]
+            },
+            "description": "List all unban records."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Unbans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response is array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/unbans/{{unban_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "unbans",
+                "{{unban_user_id}}"
+              ]
+            },
+            "description": "Get all unban records for a user."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User Unbans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"response message is correct\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql(\"unbans deleted successfully\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/unbans/{{unban_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "unbans",
+                "{{unban_user_id}}"
+              ]
+            },
+            "description": "Delete all unban records for a user."
           },
           "response": []
         }
