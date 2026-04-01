@@ -13,8 +13,8 @@ func InitCommitmentRoutes(g *gin.Engine) {
 	handler := NewHandler(service)
 
 	g.POST("/api/commitments", handler.CreateCommitment)
-	g.DELETE("/api/commitments/:user_id", handler.DeleteCommitment)
-	g.PUT("/api/commitments/:user_id", handler.UpdateCommitment)
-	g.GET("/api/commitments/:user_id", handler.GetCommitment)
+	g.DELETE("/api/commitments/:namespace", handler.DeleteCommitment)
+	g.PUT("/api/commitments/:namespace", handler.UpdateCommitment)
+	g.GET("/api/commitments/:namespace", handler.GetCommitment)
 	g.GET("/api/commitments", handler.ListCommitments)
 }

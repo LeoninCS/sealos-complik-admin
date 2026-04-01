@@ -134,23 +134,23 @@ If MySQL is not running inside the same network as the container, update `config
 | `DELETE` | `/api/configs/:config_name` | Delete project config |
 | `POST` | `/api/commitments` | Create commitment |
 | `GET` | `/api/commitments` | List commitments |
-| `GET` | `/api/commitments/:user_id` | Get commitment by user ID |
-| `PUT` | `/api/commitments/:user_id` | Update commitment |
-| `DELETE` | `/api/commitments/:user_id` | Delete commitment |
+| `GET` | `/api/commitments/:namespace` | Get commitment by namespace |
+| `PUT` | `/api/commitments/:namespace` | Update commitment |
+| `DELETE` | `/api/commitments/:namespace` | Delete commitment |
 | `POST` | `/api/violations` | Create violation record |
 | `GET` | `/api/violations` | List violation records |
-| `GET` | `/api/violations/:user_id` | Get violations by user ID |
-| `DELETE` | `/api/violations/:user_id` | Delete violations by user ID |
-| `GET` | `/api/users/:user_id/violations-status` | Check whether a user has violations |
+| `GET` | `/api/violations/:namespace` | Get violations by namespace |
+| `DELETE` | `/api/violations/:namespace` | Delete violations by namespace |
+| `GET` | `/api/namespaces/:namespace/violations-status` | Check whether a namespace has violations |
 | `POST` | `/api/bans` | Create ban record |
 | `GET` | `/api/bans` | List ban records |
-| `GET` | `/api/bans/:user_id` | Get bans by user ID |
-| `DELETE` | `/api/bans/:user_id` | Delete bans by user ID |
-| `GET` | `/api/users/:user_id/ban-status` | Check whether a user is banned |
+| `GET` | `/api/bans/:namespace` | Get bans by namespace |
+| `DELETE` | `/api/bans/:namespace` | Delete bans by namespace |
+| `GET` | `/api/namespaces/:namespace/ban-status` | Check whether a namespace is banned |
 | `POST` | `/api/unbans` | Create unban record |
 | `GET` | `/api/unbans` | List unban records |
-| `GET` | `/api/unbans/:user_id` | Get unban records by user ID |
-| `DELETE` | `/api/unbans/:user_id` | Delete unban records by user ID |
+| `GET` | `/api/unbans/:namespace` | Get unban records by namespace |
+| `DELETE` | `/api/unbans/:namespace` | Delete unban records by namespace |
 
 ### Example Requests
 
@@ -179,7 +179,7 @@ Create a commitment:
 curl -X POST http://localhost:8080/api/commitments \
   -H "Content-Type: application/json" \
   -d '{
-    "user_id": 1001,
+    "namespace": "ns-demo",
     "file_name": "commitment.pdf",
     "file_url": "https://oss.example.com/commitments/commitment.pdf"
   }'
@@ -323,23 +323,23 @@ docker run --rm -p 8080:8080 sealos-complik-admin
 | `DELETE` | `/api/configs/:config_name` | 删除项目配置 |
 | `POST` | `/api/commitments` | 创建承诺记录 |
 | `GET` | `/api/commitments` | 查询承诺记录列表 |
-| `GET` | `/api/commitments/:user_id` | 按用户 ID 查询承诺记录 |
-| `PUT` | `/api/commitments/:user_id` | 更新承诺记录 |
-| `DELETE` | `/api/commitments/:user_id` | 删除承诺记录 |
+| `GET` | `/api/commitments/:namespace` | 按 namespace 查询承诺记录 |
+| `PUT` | `/api/commitments/:namespace` | 更新承诺记录 |
+| `DELETE` | `/api/commitments/:namespace` | 删除承诺记录 |
 | `POST` | `/api/violations` | 创建违规记录 |
 | `GET` | `/api/violations` | 查询违规记录列表 |
-| `GET` | `/api/violations/:user_id` | 按用户 ID 查询违规记录 |
-| `DELETE` | `/api/violations/:user_id` | 删除用户违规记录 |
-| `GET` | `/api/users/:user_id/violations-status` | 查询用户是否有违规记录 |
+| `GET` | `/api/violations/:namespace` | 按 namespace 查询违规记录 |
+| `DELETE` | `/api/violations/:namespace` | 删除 namespace 违规记录 |
+| `GET` | `/api/namespaces/:namespace/violations-status` | 查询 namespace 是否有违规记录 |
 | `POST` | `/api/bans` | 创建封禁记录 |
 | `GET` | `/api/bans` | 查询封禁记录列表 |
-| `GET` | `/api/bans/:user_id` | 按用户 ID 查询封禁记录 |
-| `DELETE` | `/api/bans/:user_id` | 删除用户封禁记录 |
-| `GET` | `/api/users/:user_id/ban-status` | 查询用户是否处于封禁状态 |
+| `GET` | `/api/bans/:namespace` | 按 namespace 查询封禁记录 |
+| `DELETE` | `/api/bans/:namespace` | 删除 namespace 封禁记录 |
+| `GET` | `/api/namespaces/:namespace/ban-status` | 查询 namespace 是否处于封禁状态 |
 | `POST` | `/api/unbans` | 创建解封记录 |
 | `GET` | `/api/unbans` | 查询解封记录列表 |
-| `GET` | `/api/unbans/:user_id` | 按用户 ID 查询解封记录 |
-| `DELETE` | `/api/unbans/:user_id` | 删除用户解封记录 |
+| `GET` | `/api/unbans/:namespace` | 按 namespace 查询解封记录 |
+| `DELETE` | `/api/unbans/:namespace` | 删除 namespace 解封记录 |
 
 ### 请求示例
 
@@ -368,7 +368,7 @@ curl -X POST http://localhost:8080/api/configs \
 curl -X POST http://localhost:8080/api/commitments \
   -H "Content-Type: application/json" \
   -d '{
-    "user_id": 1001,
+    "namespace": "ns-demo",
     "file_name": "commitment.pdf",
     "file_url": "https://oss.example.com/commitments/commitment.pdf"
   }'

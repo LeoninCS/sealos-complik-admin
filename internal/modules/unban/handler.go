@@ -36,14 +36,14 @@ func (h *Handler) CreateUnban(c *gin.Context) {
 	})
 }
 
-// DeleteUnbans handles deleting all unban records for a user.
+// DeleteUnbans handles deleting all unban records for a namespace.
 func (h *Handler) DeleteUnbans(c *gin.Context) {
-	userID, ok := bindUnbanUserID(c)
+	namespace, ok := bindUnbanNamespace(c)
 	if !ok {
 		return
 	}
 
-	if err := h.service.DeleteUnbans(c.Request.Context(), userID); err != nil {
+	if err := h.service.DeleteUnbans(c.Request.Context(), namespace); err != nil {
 		h.respondWithServiceError(c, err, "failed to delete unbans")
 		return
 	}
@@ -53,14 +53,14 @@ func (h *Handler) DeleteUnbans(c *gin.Context) {
 	})
 }
 
-// GetUnbans handles retrieving all unban records for a user.
+// GetUnbans handles retrieving all unban records for a namespace.
 func (h *Handler) GetUnbans(c *gin.Context) {
-	userID, ok := bindUnbanUserID(c)
+	namespace, ok := bindUnbanNamespace(c)
 	if !ok {
 		return
 	}
 
-	resp, err := h.service.GetUnbans(c.Request.Context(), userID)
+	resp, err := h.service.GetUnbans(c.Request.Context(), namespace)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to get unbans")
 		return
@@ -80,18 +80,18 @@ func (h *Handler) ListUnbans(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// bindUnbanUserID extracts the user ID from the URI and validates it.
-func bindUnbanUserID(c *gin.Context) (uint64, bool) {
-	var req UnbanUserIDRequest
+// bindUnbanNamespace extracts the namespace from the URI and validates it.
+func bindUnbanNamespace(c *gin.Context) (string, bool) {
+	var req UnbanNamespaceRequest
 	if err := c.ShouldBindUri(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "invalid request path",
 			"error":   err.Error(),
 		})
-		return 0, false
+		return "", false
 	}
 
-	return req.UserID, true
+	return req.Namespace, true
 }
 
 // respondWithServiceError handles responding with appropriate error messages based on the service error.

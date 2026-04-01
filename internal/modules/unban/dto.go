@@ -2,17 +2,17 @@ package unban
 
 import "time"
 
-type UnbanUserIDRequest struct {
-	UserID uint64 `uri:"user_id" binding:"required,min=1"`
+type UnbanNamespaceRequest struct {
+	Namespace string `uri:"namespace" binding:"required,max=255"`
 }
 
 type CreateUnbanRequest struct {
-	UserID       uint64 `json:"user_id" binding:"required,min=1"`
+	Namespace    string `json:"namespace" binding:"required,max=255"`
 	OperatorName string `json:"operator_name" binding:"required,max=100"`
 }
 
 type UnbanResponse struct {
-	UserID       uint64    `json:"user_id"`
+	Namespace    string    `json:"namespace"`
 	OperatorName string    `json:"operator_name"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

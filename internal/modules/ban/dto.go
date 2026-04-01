@@ -2,12 +2,12 @@ package ban
 
 import "time"
 
-type BanUserIDRequest struct {
-	UserID uint64 `uri:"user_id" binding:"required,min=1"`
+type BanNamespaceRequest struct {
+	Namespace string `uri:"namespace" binding:"required,max=255"`
 }
 
 type CreateBanRequest struct {
-	UserID       uint64     `json:"user_id" binding:"required,min=1"`
+	Namespace    string     `json:"namespace" binding:"required,max=255"`
 	Reason       string     `json:"reason" binding:"omitempty,max=500"`
 	BanStartTime time.Time  `json:"ban_start_time" binding:"required"`
 	BanEndTime   *time.Time `json:"ban_end_time"`
@@ -15,7 +15,7 @@ type CreateBanRequest struct {
 }
 
 type BanResponse struct {
-	UserID       uint64     `json:"user_id"`
+	Namespace    string     `json:"namespace"`
 	Reason       string     `json:"reason,omitempty"`
 	BanStartTime time.Time  `json:"ban_start_time"`
 	BanEndTime   *time.Time `json:"ban_end_time,omitempty"`

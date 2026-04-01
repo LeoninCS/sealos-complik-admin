@@ -36,9 +36,9 @@ func (h *Handler) CreateCommitment(c *gin.Context) {
 	})
 }
 
-// UpdateCommitment handles updating a commitment.
+// UpdateCommitment handles updating a commitment by namespace.
 func (h *Handler) UpdateCommitment(c *gin.Context) {
-	userID, ok := bindCommitmentUserID(c)
+	namespace, ok := bindCommitmentNamespace(c)
 	if !ok {
 		return
 	}
@@ -52,7 +52,7 @@ func (h *Handler) UpdateCommitment(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateCommitment(c.Request.Context(), userID, req); err != nil {
+	if err := h.service.UpdateCommitment(c.Request.Context(), namespace, req); err != nil {
 		h.respondWithServiceError(c, err, "failed to update commitment")
 		return
 	}
@@ -62,14 +62,14 @@ func (h *Handler) UpdateCommitment(c *gin.Context) {
 	})
 }
 
-// DeleteCommitment handles deleting a commitment.
+// DeleteCommitment handles deleting a commitment by namespace.
 func (h *Handler) DeleteCommitment(c *gin.Context) {
-	userID, ok := bindCommitmentUserID(c)
+	namespace, ok := bindCommitmentNamespace(c)
 	if !ok {
 		return
 	}
 
-	if err := h.service.DeleteCommitment(c.Request.Context(), userID); err != nil {
+	if err := h.service.DeleteCommitment(c.Request.Context(), namespace); err != nil {
 		h.respondWithServiceError(c, err, "failed to delete commitment")
 		return
 	}
@@ -79,14 +79,14 @@ func (h *Handler) DeleteCommitment(c *gin.Context) {
 	})
 }
 
-// GetCommitment handles retrieving a commitment by user ID.
+// GetCommitment handles retrieving a commitment by namespace.
 func (h *Handler) GetCommitment(c *gin.Context) {
-	userID, ok := bindCommitmentUserID(c)
+	namespace, ok := bindCommitmentNamespace(c)
 	if !ok {
 		return
 	}
 
-	resp, err := h.service.GetCommitment(c.Request.Context(), userID)
+	resp, err := h.service.GetCommitment(c.Request.Context(), namespace)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to get commitment")
 		return
@@ -106,18 +106,18 @@ func (h *Handler) ListCommitments(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// bindCommitmentUserID extracts the user ID from the URI and validates it.
-func bindCommitmentUserID(c *gin.Context) (uint64, bool) {
-	var req CommitmentUserIDRequest
+// bindCommitmentNamespace extracts the namespace from the URI and validates it.
+func bindCommitmentNamespace(c *gin.Context) (string, bool) {
+	var req CommitmentNamespaceRequest
 	if err := c.ShouldBindUri(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "invalid request path",
 			"error":   err.Error(),
 		})
-		return 0, false
+		return "", false
 	}
 
-	return req.UserID, true
+	return req.Namespace, true
 }
 
 // respondWithServiceError handles responding with appropriate error messages based on the service error.

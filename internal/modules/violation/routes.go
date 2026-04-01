@@ -13,8 +13,8 @@ func InitViolationRoutes(g *gin.Engine) {
 	handler := NewHandler(service)
 
 	g.POST("/api/violations", handler.CreateViolation)
-	g.DELETE("/api/violations/:user_id", handler.DeleteViolations)
-	g.GET("/api/violations/:user_id", handler.GetViolations)
+	g.DELETE("/api/violations/:namespace", handler.DeleteViolations)
+	g.GET("/api/violations/:namespace", handler.GetViolations)
 	g.GET("/api/violations", handler.ListViolations)
-	g.GET("/api/users/:user_id/violations-status", handler.GetViolationStatus)
+	g.GET("/api/namespaces/:namespace/violations-status", handler.GetViolationStatus)
 }

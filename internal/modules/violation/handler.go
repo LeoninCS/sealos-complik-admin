@@ -36,14 +36,14 @@ func (h *Handler) CreateViolation(c *gin.Context) {
 	})
 }
 
-// DeleteViolations handles deleting all violation records for a user.
+// DeleteViolations handles deleting all violation records for a namespace.
 func (h *Handler) DeleteViolations(c *gin.Context) {
-	userID, ok := bindViolationUserID(c)
+	namespace, ok := bindViolationNamespace(c)
 	if !ok {
 		return
 	}
 
-	if err := h.service.DeleteViolations(c.Request.Context(), userID); err != nil {
+	if err := h.service.DeleteViolations(c.Request.Context(), namespace); err != nil {
 		h.respondWithServiceError(c, err, "failed to delete violations")
 		return
 	}
@@ -53,14 +53,14 @@ func (h *Handler) DeleteViolations(c *gin.Context) {
 	})
 }
 
-// GetViolations handles retrieving all violation records for a user.
+// GetViolations handles retrieving all violation records for a namespace.
 func (h *Handler) GetViolations(c *gin.Context) {
-	userID, ok := bindViolationUserID(c)
+	namespace, ok := bindViolationNamespace(c)
 	if !ok {
 		return
 	}
 
-	resp, err := h.service.GetViolations(c.Request.Context(), userID)
+	resp, err := h.service.GetViolations(c.Request.Context(), namespace)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to get violations")
 		return
@@ -80,14 +80,14 @@ func (h *Handler) ListViolations(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// GetViolationStatus handles checking whether a user has any violation records.
+// GetViolationStatus handles checking whether a namespace has any violation records.
 func (h *Handler) GetViolationStatus(c *gin.Context) {
-	userID, ok := bindViolationUserID(c)
+	namespace, ok := bindViolationNamespace(c)
 	if !ok {
 		return
 	}
 
-	resp, err := h.service.GetViolationStatus(c.Request.Context(), userID)
+	resp, err := h.service.GetViolationStatus(c.Request.Context(), namespace)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to get violation status")
 		return
@@ -96,18 +96,18 @@ func (h *Handler) GetViolationStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// bindViolationUserID extracts the user ID from the URI and validates it.
-func bindViolationUserID(c *gin.Context) (uint64, bool) {
-	var req ViolationUserIDRequest
+// bindViolationNamespace extracts the namespace from the URI and validates it.
+func bindViolationNamespace(c *gin.Context) (string, bool) {
+	var req ViolationNamespaceRequest
 	if err := c.ShouldBindUri(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "invalid request path",
 			"error":   err.Error(),
 		})
-		return 0, false
+		return "", false
 	}
 
-	return req.UserID, true
+	return req.Namespace, true
 }
 
 // respondWithServiceError handles responding with appropriate error messages based on the service error.

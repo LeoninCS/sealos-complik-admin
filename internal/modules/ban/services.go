@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrBanInvalidInput = errors.New("user id, ban start time, and operator name are required")
+	ErrBanInvalidInput = errors.New("namespace, ban start time, and operator name are required")
 	ErrBanNotFound     = errors.New("ban not found")
 )
 
@@ -28,13 +28,13 @@ func NewService(repository *Repository) *Service {
 
 // CreateBan creates a new ban record.
 func (s *Service) CreateBan(ctx context.Context, req CreateBanRequest) error {
-	input, err := normalizeBanInput(req.UserID, req.Reason, req.BanStartTime, req.BanEndTime, req.OperatorName)
+	input, err := normalizeBanInput(req.Namespace, req.Reason, req.BanStartTime, req.BanEndTime, req.OperatorName)
 	if err != nil {
 		return err
 	}
 
 	ban := &Ban{
-		UserID:       input.UserID,
+		Namespace:    input.Namespace,
 		Reason:       input.Reason,
 		BanStartTime: input.BanStartTime,
 		BanEndTime:   input.BanEndTime,
@@ -48,26 +48,26 @@ func (s *Service) CreateBan(ctx context.Context, req CreateBanRequest) error {
 	return nil
 }
 
-// DeleteBans deletes all ban records for the given user.
-func (s *Service) DeleteBans(ctx context.Context, userID uint64) error {
-	if err := validateUserID(userID); err != nil {
+// DeleteBans deletes all ban records for the given namespace.
+func (s *Service) DeleteBans(ctx context.Context, namespace string) error {
+	if err := validateNamespace(namespace); err != nil {
 		return err
 	}
 
-	if err := s.repository.DeleteBansByUserID(ctx, userID); err != nil {
+	if err := s.repository.DeleteBansByNamespace(ctx, namespace); err != nil {
 		return translateRepositoryError(err)
 	}
 
 	return nil
 }
 
-// GetBans returns all ban records for the given user.
-func (s *Service) GetBans(ctx context.Context, userID uint64) ([]BanResponse, error) {
-	if err := validateUserID(userID); err != nil {
+// GetBans returns all ban records for the given namespace.
+func (s *Service) GetBans(ctx context.Context, namespace string) ([]BanResponse, error) {
+	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
 
-	bans, err := s.repository.GetBansByUserID(ctx, userID)
+	bans, err := s.repository.GetBansByNamespace(ctx, namespace)
 	if err != nil {
 		return nil, translateRepositoryError(err)
 	}
@@ -95,13 +95,13 @@ func (s *Service) ListBans(ctx context.Context) ([]BanResponse, error) {
 	return responses, nil
 }
 
-// GetBanStatus returns whether the given user is currently banned.
-func (s *Service) GetBanStatus(ctx context.Context, userID uint64) (*BanStatusResponse, error) {
-	if err := validateUserID(userID); err != nil {
+// GetBanStatus returns whether the given namespace is currently banned.
+func (s *Service) GetBanStatus(ctx context.Context, namespace string) (*BanStatusResponse, error) {
+	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
 
-	banned, err := s.repository.HasActiveBan(ctx, userID, s.now())
+	banned, err := s.repository.HasActiveBan(ctx, namespace, s.now())
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (s *Service) GetBanStatus(ctx context.Context, userID uint64) (*BanStatusRe
 }
 
 type normalizedBanInput struct {
-	UserID       uint64
+	Namespace    string
 	Reason       string
 	BanStartTime time.Time
 	BanEndTime   *time.Time
@@ -118,11 +118,12 @@ type normalizedBanInput struct {
 }
 
 // normalizeBanInput keeps create validation consistent.
-func normalizeBanInput(userID uint64, reason string, banStartTime time.Time, banEndTime *time.Time, operatorName string) (*normalizedBanInput, error) {
+func normalizeBanInput(namespace, reason string, banStartTime time.Time, banEndTime *time.Time, operatorName string) (*normalizedBanInput, error) {
+	trimmedNamespace := strings.TrimSpace(namespace)
 	trimmedReason := strings.TrimSpace(reason)
 	trimmedOperatorName := strings.TrimSpace(operatorName)
 
-	if userID == 0 || banStartTime.IsZero() || trimmedOperatorName == "" {
+	if trimmedNamespace == "" || banStartTime.IsZero() || trimmedOperatorName == "" {
 		return nil, ErrBanInvalidInput
 	}
 	if banEndTime != nil && banEndTime.Before(banStartTime) {
@@ -130,7 +131,7 @@ func normalizeBanInput(userID uint64, reason string, banStartTime time.Time, ban
 	}
 
 	return &normalizedBanInput{
-		UserID:       userID,
+		Namespace:    trimmedNamespace,
 		Reason:       trimmedReason,
 		BanStartTime: banStartTime,
 		BanEndTime:   banEndTime,
@@ -138,8 +139,8 @@ func normalizeBanInput(userID uint64, reason string, banStartTime time.Time, ban
 	}, nil
 }
 
-func validateUserID(userID uint64) error {
-	if userID == 0 {
+func validateNamespace(namespace string) error {
+	if strings.TrimSpace(namespace) == "" {
 		return ErrBanInvalidInput
 	}
 
@@ -161,7 +162,7 @@ func translateRepositoryError(err error) error {
 
 func toBanResponse(ban *Ban) *BanResponse {
 	return &BanResponse{
-		UserID:       ban.UserID,
+		Namespace:    ban.Namespace,
 		Reason:       ban.Reason,
 		BanStartTime: ban.BanStartTime,
 		BanEndTime:   ban.BanEndTime,

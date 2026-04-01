@@ -20,10 +20,10 @@ func (r *Repository) CreateBan(ctx context.Context, ban *Ban) error {
 	return r.db.WithContext(ctx).Create(ban).Error
 }
 
-// GetBansByUserID returns all ban records for the given user.
-func (r *Repository) GetBansByUserID(ctx context.Context, userID uint64) ([]Ban, error) {
+// GetBansByNamespace returns all ban records for the given namespace.
+func (r *Repository) GetBansByNamespace(ctx context.Context, namespace string) ([]Ban, error) {
 	var bans []Ban
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Order("ban_start_time DESC, id DESC").Find(&bans).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("namespace = ?", namespace).Order("ban_start_time DESC, id DESC").Find(&bans).Error; err != nil {
 		return nil, err
 	}
 	if len(bans) == 0 {
@@ -43,9 +43,9 @@ func (r *Repository) ListBans(ctx context.Context) ([]Ban, error) {
 	return bans, nil
 }
 
-// DeleteBansByUserID deletes all ban records for the given user.
-func (r *Repository) DeleteBansByUserID(ctx context.Context, userID uint64) error {
-	result := r.db.WithContext(ctx).Where("user_id = ?", userID).Delete(&Ban{})
+// DeleteBansByNamespace deletes all ban records for the given namespace.
+func (r *Repository) DeleteBansByNamespace(ctx context.Context, namespace string) error {
+	result := r.db.WithContext(ctx).Where("namespace = ?", namespace).Delete(&Ban{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -56,12 +56,12 @@ func (r *Repository) DeleteBansByUserID(ctx context.Context, userID uint64) erro
 	return nil
 }
 
-// HasActiveBan reports whether the given user currently has any active ban records.
-func (r *Repository) HasActiveBan(ctx context.Context, userID uint64, now time.Time) (bool, error) {
+// HasActiveBan reports whether the given namespace currently has any active ban records.
+func (r *Repository) HasActiveBan(ctx context.Context, namespace string, now time.Time) (bool, error) {
 	var count int64
 	if err := r.db.WithContext(ctx).
 		Model(&Ban{}).
-		Where("user_id = ?", userID).
+		Where("namespace = ?", namespace).
 		Where("ban_start_time <= ?", now).
 		Where("ban_end_time IS NULL OR ban_end_time >= ?", now).
 		Count(&count).Error; err != nil {

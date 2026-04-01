@@ -10,7 +10,7 @@ import (
 
 var (
 	ErrCommitmentAlreadyExists = errors.New("commitment already exists")
-	ErrCommitmentInvalidInput  = errors.New("user id, file name, and file url are required")
+	ErrCommitmentInvalidInput  = errors.New("namespace, file name, and file url are required")
 	ErrCommitmentNotFound      = errors.New("commitment not found")
 )
 
@@ -22,23 +22,23 @@ func NewService(repository *Repository) *Service {
 	return &Service{repository: repository}
 }
 
-// CreateCommitment creates a new commitment for the given user.
+// CreateCommitment creates a new commitment for the given namespace.
 func (s *Service) CreateCommitment(ctx context.Context, req CreateCommitmentRequest) error {
-	input, err := normalizeCreateCommitmentInput(req.UserID, req.FileName, req.FileURL)
+	input, err := normalizeCreateCommitmentInput(req.Namespace, req.FileName, req.FileURL)
 	if err != nil {
 		return err
 	}
 
-	if _, err := s.repository.GetCommitmentByUserID(ctx, input.UserID); err == nil {
+	if _, err := s.repository.GetCommitmentByNamespace(ctx, input.Namespace); err == nil {
 		return ErrCommitmentAlreadyExists
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 
 	commitment := &Commitment{
-		UserID:   input.UserID,
-		FileName: input.FileName,
-		FileURL:  input.FileURL,
+		Namespace: input.Namespace,
+		FileName:  input.FileName,
+		FileURL:   input.FileURL,
 	}
 
 	if err := s.repository.CreateCommitment(ctx, commitment); err != nil {
@@ -48,14 +48,14 @@ func (s *Service) CreateCommitment(ctx context.Context, req CreateCommitmentRequ
 	return nil
 }
 
-// UpdateCommitment updates the commitment record for the given user.
-func (s *Service) UpdateCommitment(ctx context.Context, userID uint64, req UpdateCommitmentRequest) error {
-	commitment, err := s.repository.GetCommitmentByUserID(ctx, userID)
+// UpdateCommitment updates the commitment record for the given namespace.
+func (s *Service) UpdateCommitment(ctx context.Context, namespace string, req UpdateCommitmentRequest) error {
+	commitment, err := s.repository.GetCommitmentByNamespace(ctx, namespace)
 	if err != nil {
 		return translateRepositoryError(err)
 	}
 
-	input, err := normalizeUpdateCommitmentInput(userID, req.FileName, req.FileURL)
+	input, err := normalizeUpdateCommitmentInput(namespace, req.FileName, req.FileURL)
 	if err != nil {
 		return err
 	}
@@ -70,18 +70,18 @@ func (s *Service) UpdateCommitment(ctx context.Context, userID uint64, req Updat
 	return nil
 }
 
-// DeleteCommitment deletes the commitment record for the given user.
-func (s *Service) DeleteCommitment(ctx context.Context, userID uint64) error {
-	if err := s.repository.DeleteCommitmentByUserID(ctx, userID); err != nil {
+// DeleteCommitment deletes the commitment record for the given namespace.
+func (s *Service) DeleteCommitment(ctx context.Context, namespace string) error {
+	if err := s.repository.DeleteCommitmentByNamespace(ctx, namespace); err != nil {
 		return translateRepositoryError(err)
 	}
 
 	return nil
 }
 
-// GetCommitment returns the commitment record for the given user.
-func (s *Service) GetCommitment(ctx context.Context, userID uint64) (*CommitmentResponse, error) {
-	commitment, err := s.repository.GetCommitmentByUserID(ctx, userID)
+// GetCommitment returns the commitment record for the given namespace.
+func (s *Service) GetCommitment(ctx context.Context, namespace string) (*CommitmentResponse, error) {
+	commitment, err := s.repository.GetCommitmentByNamespace(ctx, namespace)
 	if err != nil {
 		return nil, translateRepositoryError(err)
 	}
@@ -105,33 +105,34 @@ func (s *Service) ListCommitments(ctx context.Context) ([]CommitmentResponse, er
 }
 
 type normalizedCommitmentInput struct {
-	UserID   uint64
-	FileName string
-	FileURL  string
+	Namespace string
+	FileName  string
+	FileURL   string
 }
 
 // normalizeCreateCommitmentInput keeps create validation consistent.
-func normalizeCreateCommitmentInput(userID uint64, fileName, fileURL string) (*normalizedCommitmentInput, error) {
-	return normalizeCommitmentInput(userID, fileName, fileURL)
+func normalizeCreateCommitmentInput(namespace, fileName, fileURL string) (*normalizedCommitmentInput, error) {
+	return normalizeCommitmentInput(namespace, fileName, fileURL)
 }
 
 // normalizeUpdateCommitmentInput keeps update validation consistent.
-func normalizeUpdateCommitmentInput(userID uint64, fileName, fileURL string) (*normalizedCommitmentInput, error) {
-	return normalizeCommitmentInput(userID, fileName, fileURL)
+func normalizeUpdateCommitmentInput(namespace, fileName, fileURL string) (*normalizedCommitmentInput, error) {
+	return normalizeCommitmentInput(namespace, fileName, fileURL)
 }
 
-func normalizeCommitmentInput(userID uint64, fileName, fileURL string) (*normalizedCommitmentInput, error) {
+func normalizeCommitmentInput(namespace, fileName, fileURL string) (*normalizedCommitmentInput, error) {
+	trimmedNamespace := strings.TrimSpace(namespace)
 	trimmedFileName := strings.TrimSpace(fileName)
 	trimmedFileURL := strings.TrimSpace(fileURL)
 
-	if userID == 0 || trimmedFileName == "" || trimmedFileURL == "" {
+	if trimmedNamespace == "" || trimmedFileName == "" || trimmedFileURL == "" {
 		return nil, ErrCommitmentInvalidInput
 	}
 
 	return &normalizedCommitmentInput{
-		UserID:   userID,
-		FileName: trimmedFileName,
-		FileURL:  trimmedFileURL,
+		Namespace: trimmedNamespace,
+		FileName:  trimmedFileName,
+		FileURL:   trimmedFileURL,
 	}, nil
 }
 
@@ -150,7 +151,7 @@ func translateRepositoryError(err error) error {
 
 func toCommitmentResponse(commitment *Commitment) *CommitmentResponse {
 	return &CommitmentResponse{
-		UserID:    commitment.UserID,
+		Namespace: commitment.Namespace,
 		FileName:  commitment.FileName,
 		FileURL:   commitment.FileURL,
 		CreatedAt: commitment.CreatedAt,

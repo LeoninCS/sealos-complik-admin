@@ -7,10 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
+const legacyNamespaceColumn = "user" + "_id"
+
 type Ban struct {
 	// ID remains the internal primary key for joins and stable references.
 	ID           uint64     `gorm:"primaryKey;autoIncrement" json:"id"`
-	UserID       uint64     `gorm:"not null;index" json:"user_id"`
+	Namespace    string     `gorm:"size:255;not null;index" json:"namespace"`
 	Reason       string     `gorm:"size:500" json:"reason,omitempty"`
 	BanStartTime time.Time  `gorm:"not null" json:"ban_start_time"`
 	BanEndTime   *time.Time `json:"ban_end_time,omitempty"`
@@ -23,6 +25,12 @@ type Ban struct {
 func AutoMigrate(db *gorm.DB) error {
 	if db == nil {
 		return fmt.Errorf("ban automigrate: database is nil")
+	}
+
+	if db.Migrator().HasColumn(&Ban{}, legacyNamespaceColumn) && !db.Migrator().HasColumn(&Ban{}, "namespace") {
+		if err := db.Migrator().RenameColumn(&Ban{}, legacyNamespaceColumn, "namespace"); err != nil {
+			return fmt.Errorf("ban rename legacy namespace column: %w", err)
+		}
 	}
 
 	if err := db.AutoMigrate(&Ban{}); err != nil {

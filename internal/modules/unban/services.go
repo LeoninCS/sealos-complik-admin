@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrUnbanInvalidInput = errors.New("user id and operator name are required")
+	ErrUnbanInvalidInput = errors.New("namespace and operator name are required")
 	ErrUnbanNotFound     = errors.New("unban not found")
 )
 
@@ -23,13 +23,13 @@ func NewService(repository *Repository) *Service {
 
 // CreateUnban creates a new unban record.
 func (s *Service) CreateUnban(ctx context.Context, req CreateUnbanRequest) error {
-	input, err := normalizeUnbanInput(req.UserID, req.OperatorName)
+	input, err := normalizeUnbanInput(req.Namespace, req.OperatorName)
 	if err != nil {
 		return err
 	}
 
 	record := &Unban{
-		UserID:       input.UserID,
+		Namespace:    input.Namespace,
 		OperatorName: input.OperatorName,
 	}
 
@@ -40,26 +40,26 @@ func (s *Service) CreateUnban(ctx context.Context, req CreateUnbanRequest) error
 	return nil
 }
 
-// DeleteUnbans deletes all unban records for the given user.
-func (s *Service) DeleteUnbans(ctx context.Context, userID uint64) error {
-	if err := validateUserID(userID); err != nil {
+// DeleteUnbans deletes all unban records for the given namespace.
+func (s *Service) DeleteUnbans(ctx context.Context, namespace string) error {
+	if err := validateNamespace(namespace); err != nil {
 		return err
 	}
 
-	if err := s.repository.DeleteUnbansByUserID(ctx, userID); err != nil {
+	if err := s.repository.DeleteUnbansByNamespace(ctx, namespace); err != nil {
 		return translateRepositoryError(err)
 	}
 
 	return nil
 }
 
-// GetUnbans returns all unban records for the given user.
-func (s *Service) GetUnbans(ctx context.Context, userID uint64) ([]UnbanResponse, error) {
-	if err := validateUserID(userID); err != nil {
+// GetUnbans returns all unban records for the given namespace.
+func (s *Service) GetUnbans(ctx context.Context, namespace string) ([]UnbanResponse, error) {
+	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
 
-	unbans, err := s.repository.GetUnbansByUserID(ctx, userID)
+	unbans, err := s.repository.GetUnbansByNamespace(ctx, namespace)
 	if err != nil {
 		return nil, translateRepositoryError(err)
 	}
@@ -88,26 +88,27 @@ func (s *Service) ListUnbans(ctx context.Context) ([]UnbanResponse, error) {
 }
 
 type normalizedUnbanInput struct {
-	UserID       uint64
+	Namespace    string
 	OperatorName string
 }
 
 // normalizeUnbanInput keeps create validation consistent.
-func normalizeUnbanInput(userID uint64, operatorName string) (*normalizedUnbanInput, error) {
+func normalizeUnbanInput(namespace, operatorName string) (*normalizedUnbanInput, error) {
+	trimmedNamespace := strings.TrimSpace(namespace)
 	trimmedOperatorName := strings.TrimSpace(operatorName)
 
-	if userID == 0 || trimmedOperatorName == "" {
+	if trimmedNamespace == "" || trimmedOperatorName == "" {
 		return nil, ErrUnbanInvalidInput
 	}
 
 	return &normalizedUnbanInput{
-		UserID:       userID,
+		Namespace:    trimmedNamespace,
 		OperatorName: trimmedOperatorName,
 	}, nil
 }
 
-func validateUserID(userID uint64) error {
-	if userID == 0 {
+func validateNamespace(namespace string) error {
+	if strings.TrimSpace(namespace) == "" {
 		return ErrUnbanInvalidInput
 	}
 
@@ -129,7 +130,7 @@ func translateRepositoryError(err error) error {
 
 func toUnbanResponse(record *Unban) *UnbanResponse {
 	return &UnbanResponse{
-		UserID:       record.UserID,
+		Namespace:    record.Namespace,
 		OperatorName: record.OperatorName,
 		CreatedAt:    record.CreatedAt,
 		UpdatedAt:    record.UpdatedAt,

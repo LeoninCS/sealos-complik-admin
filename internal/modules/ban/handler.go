@@ -36,14 +36,14 @@ func (h *Handler) CreateBan(c *gin.Context) {
 	})
 }
 
-// DeleteBans handles deleting all ban records for a user.
+// DeleteBans handles deleting all ban records for a namespace.
 func (h *Handler) DeleteBans(c *gin.Context) {
-	userID, ok := bindBanUserID(c)
+	namespace, ok := bindBanNamespace(c)
 	if !ok {
 		return
 	}
 
-	if err := h.service.DeleteBans(c.Request.Context(), userID); err != nil {
+	if err := h.service.DeleteBans(c.Request.Context(), namespace); err != nil {
 		h.respondWithServiceError(c, err, "failed to delete bans")
 		return
 	}
@@ -53,14 +53,14 @@ func (h *Handler) DeleteBans(c *gin.Context) {
 	})
 }
 
-// GetBans handles retrieving all ban records for a user.
+// GetBans handles retrieving all ban records for a namespace.
 func (h *Handler) GetBans(c *gin.Context) {
-	userID, ok := bindBanUserID(c)
+	namespace, ok := bindBanNamespace(c)
 	if !ok {
 		return
 	}
 
-	resp, err := h.service.GetBans(c.Request.Context(), userID)
+	resp, err := h.service.GetBans(c.Request.Context(), namespace)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to get bans")
 		return
@@ -80,14 +80,14 @@ func (h *Handler) ListBans(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// GetBanStatus handles checking whether a user is currently banned.
+// GetBanStatus handles checking whether a namespace is currently banned.
 func (h *Handler) GetBanStatus(c *gin.Context) {
-	userID, ok := bindBanUserID(c)
+	namespace, ok := bindBanNamespace(c)
 	if !ok {
 		return
 	}
 
-	resp, err := h.service.GetBanStatus(c.Request.Context(), userID)
+	resp, err := h.service.GetBanStatus(c.Request.Context(), namespace)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to get ban status")
 		return
@@ -96,18 +96,18 @@ func (h *Handler) GetBanStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// bindBanUserID extracts the user ID from the URI and validates it.
-func bindBanUserID(c *gin.Context) (uint64, bool) {
-	var req BanUserIDRequest
+// bindBanNamespace extracts the namespace from the URI and validates it.
+func bindBanNamespace(c *gin.Context) (string, bool) {
+	var req BanNamespaceRequest
 	if err := c.ShouldBindUri(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "invalid request path",
 			"error":   err.Error(),
 		})
-		return 0, false
+		return "", false
 	}
 
-	return req.UserID, true
+	return req.Namespace, true
 }
 
 // respondWithServiceError handles responding with appropriate error messages based on the service error.

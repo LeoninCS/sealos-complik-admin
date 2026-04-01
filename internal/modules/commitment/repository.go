@@ -19,10 +19,10 @@ func (r *Repository) CreateCommitment(ctx context.Context, commitment *Commitmen
 	return r.db.WithContext(ctx).Create(commitment).Error
 }
 
-// GetCommitmentByUserID returns a commitment by user ID.
-func (r *Repository) GetCommitmentByUserID(ctx context.Context, userID uint64) (*Commitment, error) {
+// GetCommitmentByNamespace returns a commitment by namespace.
+func (r *Repository) GetCommitmentByNamespace(ctx context.Context, namespace string) (*Commitment, error) {
 	var commitment Commitment
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&commitment).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("namespace = ?", namespace).First(&commitment).Error; err != nil {
 		return nil, err
 	}
 
@@ -44,9 +44,9 @@ func (r *Repository) UpdateCommitment(ctx context.Context, commitment *Commitmen
 	return r.db.WithContext(ctx).Save(commitment).Error
 }
 
-// DeleteCommitmentByUserID deletes commitment records for the given user ID.
-func (r *Repository) DeleteCommitmentByUserID(ctx context.Context, userID uint64) error {
-	result := r.db.WithContext(ctx).Where("user_id = ?", userID).Delete(&Commitment{})
+// DeleteCommitmentByNamespace deletes commitment records for the given namespace.
+func (r *Repository) DeleteCommitmentByNamespace(ctx context.Context, namespace string) error {
+	result := r.db.WithContext(ctx).Where("namespace = ?", namespace).Delete(&Commitment{})
 	if result.Error != nil {
 		return result.Error
 	}

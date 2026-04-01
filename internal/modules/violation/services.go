@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrViolationInvalidInput = errors.New("user id, violation type, and violation time are required")
+	ErrViolationInvalidInput = errors.New("namespace, violation type, and violation time are required")
 	ErrViolationNotFound     = errors.New("violation not found")
 )
 
@@ -24,13 +24,13 @@ func NewService(repository *Repository) *Service {
 
 // CreateViolation creates a new violation record.
 func (s *Service) CreateViolation(ctx context.Context, req CreateViolationRequest) error {
-	input, err := normalizeViolationInput(req.UserID, req.ViolationType, req.ViolationDesc, req.ViolationTime)
+	input, err := normalizeViolationInput(req.Namespace, req.ViolationType, req.ViolationDesc, req.ViolationTime)
 	if err != nil {
 		return err
 	}
 
 	violation := &Violation{
-		UserID:        input.UserID,
+		Namespace:     input.Namespace,
 		ViolationType: input.ViolationType,
 		ViolationDesc: input.ViolationDesc,
 		ViolationTime: input.ViolationTime,
@@ -43,26 +43,26 @@ func (s *Service) CreateViolation(ctx context.Context, req CreateViolationReques
 	return nil
 }
 
-// DeleteViolations deletes all violation records for the given user.
-func (s *Service) DeleteViolations(ctx context.Context, userID uint64) error {
-	if err := validateUserID(userID); err != nil {
+// DeleteViolations deletes all violation records for the given namespace.
+func (s *Service) DeleteViolations(ctx context.Context, namespace string) error {
+	if err := validateNamespace(namespace); err != nil {
 		return err
 	}
 
-	if err := s.repository.DeleteViolationsByUserID(ctx, userID); err != nil {
+	if err := s.repository.DeleteViolationsByNamespace(ctx, namespace); err != nil {
 		return translateRepositoryError(err)
 	}
 
 	return nil
 }
 
-// GetViolations returns all violation records for the given user.
-func (s *Service) GetViolations(ctx context.Context, userID uint64) ([]ViolationResponse, error) {
-	if err := validateUserID(userID); err != nil {
+// GetViolations returns all violation records for the given namespace.
+func (s *Service) GetViolations(ctx context.Context, namespace string) ([]ViolationResponse, error) {
+	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
 
-	violations, err := s.repository.GetViolationsByUserID(ctx, userID)
+	violations, err := s.repository.GetViolationsByNamespace(ctx, namespace)
 	if err != nil {
 		return nil, translateRepositoryError(err)
 	}
@@ -90,13 +90,13 @@ func (s *Service) ListViolations(ctx context.Context) ([]ViolationResponse, erro
 	return responses, nil
 }
 
-// GetViolationStatus returns whether the given user has any violation records.
-func (s *Service) GetViolationStatus(ctx context.Context, userID uint64) (*ViolationStatusResponse, error) {
-	if err := validateUserID(userID); err != nil {
+// GetViolationStatus returns whether the given namespace has any violation records.
+func (s *Service) GetViolationStatus(ctx context.Context, namespace string) (*ViolationStatusResponse, error) {
+	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
 
-	violated, err := s.repository.HasViolations(ctx, userID)
+	violated, err := s.repository.HasViolations(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -105,31 +105,32 @@ func (s *Service) GetViolationStatus(ctx context.Context, userID uint64) (*Viola
 }
 
 type normalizedViolationInput struct {
-	UserID        uint64
+	Namespace     string
 	ViolationType string
 	ViolationDesc string
 	ViolationTime time.Time
 }
 
 // normalizeViolationInput keeps create validation consistent.
-func normalizeViolationInput(userID uint64, violationType, violationDesc string, violationTime time.Time) (*normalizedViolationInput, error) {
+func normalizeViolationInput(namespace, violationType, violationDesc string, violationTime time.Time) (*normalizedViolationInput, error) {
+	trimmedNamespace := strings.TrimSpace(namespace)
 	trimmedViolationType := strings.TrimSpace(violationType)
 	trimmedViolationDesc := strings.TrimSpace(violationDesc)
 
-	if userID == 0 || trimmedViolationType == "" || violationTime.IsZero() {
+	if trimmedNamespace == "" || trimmedViolationType == "" || violationTime.IsZero() {
 		return nil, ErrViolationInvalidInput
 	}
 
 	return &normalizedViolationInput{
-		UserID:        userID,
+		Namespace:     trimmedNamespace,
 		ViolationType: trimmedViolationType,
 		ViolationDesc: trimmedViolationDesc,
 		ViolationTime: violationTime,
 	}, nil
 }
 
-func validateUserID(userID uint64) error {
-	if userID == 0 {
+func validateNamespace(namespace string) error {
+	if strings.TrimSpace(namespace) == "" {
 		return ErrViolationInvalidInput
 	}
 
@@ -151,7 +152,7 @@ func translateRepositoryError(err error) error {
 
 func toViolationResponse(violation *Violation) *ViolationResponse {
 	return &ViolationResponse{
-		UserID:        violation.UserID,
+		Namespace:     violation.Namespace,
 		ViolationType: violation.ViolationType,
 		ViolationDesc: violation.ViolationDesc,
 		ViolationTime: violation.ViolationTime,

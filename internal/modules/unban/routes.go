@@ -13,7 +13,7 @@ func InitUnbanRoutes(g *gin.Engine) {
 	handler := NewHandler(service)
 
 	g.POST("/api/unbans", handler.CreateUnban)
-	g.DELETE("/api/unbans/:user_id", handler.DeleteUnbans)
-	g.GET("/api/unbans/:user_id", handler.GetUnbans)
+	g.DELETE("/api/unbans/:namespace", handler.DeleteUnbans)
+	g.GET("/api/unbans/:namespace", handler.GetUnbans)
 	g.GET("/api/unbans", handler.ListUnbans)
 }

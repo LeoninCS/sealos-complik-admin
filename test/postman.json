@@ -17,23 +17,23 @@
       "type": "string"
     },
     {
-      "key": "commitment_user_id",
-      "value": "1001",
+      "key": "commitment_namespace",
+      "value": "ns-1001",
       "type": "string"
     },
     {
-      "key": "violation_user_id",
-      "value": "2001",
+      "key": "violation_namespace",
+      "value": "ns-2001",
       "type": "string"
     },
     {
-      "key": "ban_user_id",
-      "value": "3001",
+      "key": "ban_namespace",
+      "value": "ns-3001",
       "type": "string"
     },
     {
-      "key": "unban_user_id",
-      "value": "4001",
+      "key": "unban_namespace",
+      "value": "ns-4001",
       "type": "string"
     }
   ],
@@ -93,7 +93,7 @@
                   "    pm.expect(jsonData.message).to.eql(\"commitment created successfully\");",
                   "});",
                   "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
-                  "pm.collectionVariables.set(\"commitment_user_id\", requestData.user_id);"
+                  "pm.collectionVariables.set(\"commitment_namespace\", requestData.namespace);"
                 ]
               }
             }
@@ -109,7 +109,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": {{$timestamp}},\n  \"file_name\": \"commitment-{{$timestamp}}.pdf\",\n  \"file_url\": \"https://oss.example.com/commitments/commitment-{{$timestamp}}.pdf\"\n}",
+              "raw": "{\n  \"namespace\": \"ns-{{$timestamp}}\",\n  \"file_name\": \"commitment-{{$timestamp}}.pdf\",\n  \"file_url\": \"https://oss.example.com/commitments/commitment-{{$timestamp}}.pdf\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -146,7 +146,7 @@
                   "});",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.length > 0) {",
-                  "    pm.collectionVariables.set(\"commitment_user_id\", jsonData[jsonData.length - 1].user_id);",
+                  "    pm.collectionVariables.set(\"commitment_namespace\", jsonData[jsonData.length - 1].namespace);",
                   "}"
                 ]
               }
@@ -188,17 +188,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/commitments/{{commitment_user_id}}",
+              "raw": "{{base_url}}/api/commitments/{{commitment_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "commitments",
-                "{{commitment_user_id}}"
+                "{{commitment_namespace}}"
               ]
             },
-            "description": "Get a commitment by user ID."
+            "description": "Get a commitment by namespace."
           },
           "response": []
         },
@@ -240,17 +240,17 @@
               }
             },
             "url": {
-              "raw": "{{base_url}}/api/commitments/{{commitment_user_id}}",
+              "raw": "{{base_url}}/api/commitments/{{commitment_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "commitments",
-                "{{commitment_user_id}}"
+                "{{commitment_namespace}}"
               ]
             },
-            "description": "Update a commitment by user ID."
+            "description": "Update a commitment by namespace."
           },
           "response": []
         },
@@ -277,17 +277,17 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/commitments/{{commitment_user_id}}",
+              "raw": "{{base_url}}/api/commitments/{{commitment_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "commitments",
-                "{{commitment_user_id}}"
+                "{{commitment_namespace}}"
               ]
             },
-            "description": "Delete a commitment by user ID."
+            "description": "Delete a commitment by namespace."
           },
           "response": []
         }
@@ -533,7 +533,7 @@
                   "    pm.expect(jsonData.message).to.eql(\"violation created successfully\");",
                   "});",
                   "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
-                  "pm.collectionVariables.set(\"violation_user_id\", requestData.user_id);"
+                  "pm.collectionVariables.set(\"violation_namespace\", requestData.namespace);"
                 ]
               }
             }
@@ -549,7 +549,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": {{$timestamp}},\n  \"violation_type\": \"spam\",\n  \"violation_desc\": \"repeated spam messages\",\n  \"violation_time\": \"2026-03-31T10:00:00Z\"\n}",
+              "raw": "{\n  \"namespace\": \"ns-{{$timestamp}}\",\n  \"violation_type\": \"spam\",\n  \"violation_desc\": \"repeated spam messages\",\n  \"violation_time\": \"2026-03-31T10:00:00Z\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -586,7 +586,7 @@
                   "});",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.length > 0) {",
-                  "    pm.collectionVariables.set(\"violation_user_id\", jsonData[0].user_id);",
+                  "    pm.collectionVariables.set(\"violation_namespace\", jsonData[0].namespace);",
                   "}"
                 ]
               }
@@ -610,7 +610,7 @@
           "response": []
         },
         {
-          "name": "Get User Violations",
+          "name": "Get Namespace Violations",
           "event": [
             {
               "listen": "test",
@@ -631,17 +631,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/violations/{{violation_user_id}}",
+              "raw": "{{base_url}}/api/violations/{{violation_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "violations",
-                "{{violation_user_id}}"
+                "{{violation_namespace}}"
               ]
             },
-            "description": "Get all violation records for a user."
+            "description": "Get all violation records for a namespace."
           },
           "response": []
         },
@@ -664,23 +664,23 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/users/{{violation_user_id}}/violations-status",
+              "raw": "{{base_url}}/api/namespaces/{{violation_namespace}}/violations-status",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
-                "users",
-                "{{violation_user_id}}",
+                "namespaces",
+                "{{violation_namespace}}",
                 "violations-status"
               ]
             },
-            "description": "Check whether a user has any violation records."
+            "description": "Check whether a namespace has any violation records."
           },
           "response": []
         },
         {
-          "name": "Delete User Violations",
+          "name": "Delete Namespace Violations",
           "event": [
             {
               "listen": "test",
@@ -702,17 +702,17 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/violations/{{violation_user_id}}",
+              "raw": "{{base_url}}/api/violations/{{violation_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "violations",
-                "{{violation_user_id}}"
+                "{{violation_namespace}}"
               ]
             },
-            "description": "Delete all violation records for a user."
+            "description": "Delete all violation records for a namespace."
           },
           "response": []
         }
@@ -737,7 +737,7 @@
                   "    pm.expect(jsonData.message).to.eql(\"ban created successfully\");",
                   "});",
                   "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
-                  "pm.collectionVariables.set(\"ban_user_id\", requestData.user_id);"
+                  "pm.collectionVariables.set(\"ban_namespace\", requestData.namespace);"
                 ]
               }
             }
@@ -753,7 +753,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": {{$timestamp}},\n  \"reason\": \"malicious behavior\",\n  \"ban_start_time\": \"2026-03-31T10:00:00Z\",\n  \"ban_end_time\": \"2026-04-30T10:00:00Z\",\n  \"operator_name\": \"admin\"\n}",
+              "raw": "{\n  \"namespace\": \"ns-{{$timestamp}}\",\n  \"reason\": \"malicious behavior\",\n  \"ban_start_time\": \"2026-03-31T10:00:00Z\",\n  \"ban_end_time\": \"2026-04-30T10:00:00Z\",\n  \"operator_name\": \"admin\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -790,7 +790,7 @@
                   "});",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.length > 0) {",
-                  "    pm.collectionVariables.set(\"ban_user_id\", jsonData[0].user_id);",
+                  "    pm.collectionVariables.set(\"ban_namespace\", jsonData[0].namespace);",
                   "}"
                 ]
               }
@@ -814,7 +814,7 @@
           "response": []
         },
         {
-          "name": "Get User Bans",
+          "name": "Get Namespace Bans",
           "event": [
             {
               "listen": "test",
@@ -835,17 +835,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/bans/{{ban_user_id}}",
+              "raw": "{{base_url}}/api/bans/{{ban_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "bans",
-                "{{ban_user_id}}"
+                "{{ban_namespace}}"
               ]
             },
-            "description": "Get all ban records for a user."
+            "description": "Get all ban records for a namespace."
           },
           "response": []
         },
@@ -868,23 +868,23 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/users/{{ban_user_id}}/ban-status",
+              "raw": "{{base_url}}/api/namespaces/{{ban_namespace}}/ban-status",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
-                "users",
-                "{{ban_user_id}}",
+                "namespaces",
+                "{{ban_namespace}}",
                 "ban-status"
               ]
             },
-            "description": "Check whether a user is currently banned."
+            "description": "Check whether a namespace is currently banned."
           },
           "response": []
         },
         {
-          "name": "Delete User Bans",
+          "name": "Delete Namespace Bans",
           "event": [
             {
               "listen": "test",
@@ -906,17 +906,17 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/bans/{{ban_user_id}}",
+              "raw": "{{base_url}}/api/bans/{{ban_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "bans",
-                "{{ban_user_id}}"
+                "{{ban_namespace}}"
               ]
             },
-            "description": "Delete all ban records for a user."
+            "description": "Delete all ban records for a namespace."
           },
           "response": []
         }
@@ -941,7 +941,7 @@
                   "    pm.expect(jsonData.message).to.eql(\"unban created successfully\");",
                   "});",
                   "var requestData = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
-                  "pm.collectionVariables.set(\"unban_user_id\", requestData.user_id);"
+                  "pm.collectionVariables.set(\"unban_namespace\", requestData.namespace);"
                 ]
               }
             }
@@ -957,7 +957,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": {{$timestamp}},\n  \"operator_name\": \"admin\"\n}",
+              "raw": "{\n  \"namespace\": \"ns-{{$timestamp}}\",\n  \"operator_name\": \"admin\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -994,7 +994,7 @@
                   "});",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.length > 0) {",
-                  "    pm.collectionVariables.set(\"unban_user_id\", jsonData[0].user_id);",
+                  "    pm.collectionVariables.set(\"unban_namespace\", jsonData[0].namespace);",
                   "}"
                 ]
               }
@@ -1018,7 +1018,7 @@
           "response": []
         },
         {
-          "name": "Get User Unbans",
+          "name": "Get Namespace Unbans",
           "event": [
             {
               "listen": "test",
@@ -1039,22 +1039,22 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/unbans/{{unban_user_id}}",
+              "raw": "{{base_url}}/api/unbans/{{unban_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "unbans",
-                "{{unban_user_id}}"
+                "{{unban_namespace}}"
               ]
             },
-            "description": "Get all unban records for a user."
+            "description": "Get all unban records for a namespace."
           },
           "response": []
         },
         {
-          "name": "Delete User Unbans",
+          "name": "Delete Namespace Unbans",
           "event": [
             {
               "listen": "test",
@@ -1076,17 +1076,17 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/unbans/{{unban_user_id}}",
+              "raw": "{{base_url}}/api/unbans/{{unban_namespace}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "unbans",
-                "{{unban_user_id}}"
+                "{{unban_namespace}}"
               ]
             },
-            "description": "Delete all unban records for a user."
+            "description": "Delete all unban records for a namespace."
           },
           "response": []
         }

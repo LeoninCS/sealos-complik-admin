@@ -19,10 +19,10 @@ func (r *Repository) CreateViolation(ctx context.Context, violation *Violation) 
 	return r.db.WithContext(ctx).Create(violation).Error
 }
 
-// GetViolationsByUserID returns all violation records for the given user.
-func (r *Repository) GetViolationsByUserID(ctx context.Context, userID uint64) ([]Violation, error) {
+// GetViolationsByNamespace returns all violation records for the given namespace.
+func (r *Repository) GetViolationsByNamespace(ctx context.Context, namespace string) ([]Violation, error) {
 	var violations []Violation
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Order("violation_time DESC, id DESC").Find(&violations).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("namespace = ?", namespace).Order("violation_time DESC, id DESC").Find(&violations).Error; err != nil {
 		return nil, err
 	}
 	if len(violations) == 0 {
@@ -42,9 +42,9 @@ func (r *Repository) ListViolations(ctx context.Context) ([]Violation, error) {
 	return violations, nil
 }
 
-// DeleteViolationsByUserID deletes all violation records for the given user.
-func (r *Repository) DeleteViolationsByUserID(ctx context.Context, userID uint64) error {
-	result := r.db.WithContext(ctx).Where("user_id = ?", userID).Delete(&Violation{})
+// DeleteViolationsByNamespace deletes all violation records for the given namespace.
+func (r *Repository) DeleteViolationsByNamespace(ctx context.Context, namespace string) error {
+	result := r.db.WithContext(ctx).Where("namespace = ?", namespace).Delete(&Violation{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -55,10 +55,10 @@ func (r *Repository) DeleteViolationsByUserID(ctx context.Context, userID uint64
 	return nil
 }
 
-// HasViolations reports whether the given user has any violation records.
-func (r *Repository) HasViolations(ctx context.Context, userID uint64) (bool, error) {
+// HasViolations reports whether the given namespace has any violation records.
+func (r *Repository) HasViolations(ctx context.Context, namespace string) (bool, error) {
 	var count int64
-	if err := r.db.WithContext(ctx).Model(&Violation{}).Where("user_id = ?", userID).Count(&count).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&Violation{}).Where("namespace = ?", namespace).Count(&count).Error; err != nil {
 		return false, err
 	}
 

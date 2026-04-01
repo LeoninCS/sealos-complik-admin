@@ -13,8 +13,8 @@ func InitBanRoutes(g *gin.Engine) {
 	handler := NewHandler(service)
 
 	g.POST("/api/bans", handler.CreateBan)
-	g.DELETE("/api/bans/:user_id", handler.DeleteBans)
-	g.GET("/api/bans/:user_id", handler.GetBans)
+	g.DELETE("/api/bans/:namespace", handler.DeleteBans)
+	g.GET("/api/bans/:namespace", handler.GetBans)
 	g.GET("/api/bans", handler.ListBans)
-	g.GET("/api/users/:user_id/ban-status", handler.GetBanStatus)
+	g.GET("/api/namespaces/:namespace/ban-status", handler.GetBanStatus)
 }
