@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	configFile = "configs/config.env.yaml"
+	configFile = "/config/config.yaml"
 )
 
 func main() {
