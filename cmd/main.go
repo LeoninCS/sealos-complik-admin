@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"sealos-complik-admin/internal/infra/config"
 	"sealos-complik-admin/internal/infra/database"
@@ -11,13 +13,26 @@ import (
 )
 
 const (
-	configFile = "/config/config.yaml"
+	defaultConfigFile  = "/config/config.yaml"
+	fallbackConfigFile = "configs/config.yaml"
 )
+
+func resolveConfigFile() string {
+	if value := strings.TrimSpace(os.Getenv("CONFIG_FILE")); value != "" {
+		return value
+	}
+
+	if _, err := os.Stat(defaultConfigFile); err == nil {
+		return defaultConfigFile
+	}
+
+	return fallbackConfigFile
+}
 
 func main() {
 	// Load config
 
-	cfg := config.LoadConfig(configFile)
+	cfg := config.LoadConfig(resolveConfigFile())
 
 	// Initialize logger
 	appLogger, err := logger.New(cfg.LogDir)
