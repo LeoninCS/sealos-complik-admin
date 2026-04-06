@@ -42,6 +42,21 @@ func (r *Repository) ListViolations(ctx context.Context) ([]ProcscanViolationEve
 	return violations, nil
 }
 
+func (r *Repository) UpdateViolationStatus(ctx context.Context, id uint64, status string) error {
+	result := r.db.WithContext(ctx).
+		Model(&ProcscanViolationEvent{}).
+		Where("id = ?", id).
+		Update("status", status)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return nil
+}
+
 func (r *Repository) DeleteViolationsByNamespace(ctx context.Context, namespace string) error {
 	result := r.db.WithContext(ctx).Where("namespace = ?", namespace).Delete(&ProcscanViolationEvent{})
 	if result.Error != nil {

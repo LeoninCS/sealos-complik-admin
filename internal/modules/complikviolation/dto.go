@@ -9,6 +9,10 @@ type NamespaceRequest struct {
 	Namespace string `uri:"namespace" binding:"required,max=255"`
 }
 
+type ViolationIDRequest struct {
+	ID uint64 `uri:"id" binding:"required,min=1"`
+}
+
 type CreateViolationRequest struct {
 	Namespace     string          `json:"namespace" binding:"required,max=255"`
 	Region        string          `json:"region" binding:"omitempty,max=64"`
@@ -54,4 +58,8 @@ type ViolationResponse struct {
 
 type ViolationStatusResponse struct {
 	Violated bool `json:"violated"`
+}
+
+type UpdateViolationStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=open reviewing closed"`
 }

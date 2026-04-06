@@ -105,6 +105,19 @@ func (s *Service) ListViolations(ctx context.Context) ([]ViolationResponse, erro
 	return responses, nil
 }
 
+func (s *Service) UpdateViolationStatus(ctx context.Context, id uint64, status string) error {
+	trimmedStatus := strings.TrimSpace(status)
+	if id == 0 || (trimmedStatus != "open" && trimmedStatus != "reviewing" && trimmedStatus != "closed") {
+		return ErrViolationInvalidInput
+	}
+
+	if err := s.repository.UpdateViolationStatus(ctx, id, trimmedStatus); err != nil {
+		return translateRepositoryError(err)
+	}
+
+	return nil
+}
+
 func (s *Service) GetViolationStatus(ctx context.Context, namespace string) (*ViolationStatusResponse, error) {
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err

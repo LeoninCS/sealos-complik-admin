@@ -12,6 +12,7 @@ func InitRoutes(g *gin.Engine) {
 	handler := NewHandler(service)
 
 	g.POST("/api/procscan-violations", handler.CreateViolation)
+	g.PUT("/api/procscan-violations/:id/status", handler.UpdateViolationStatus)
 	g.DELETE("/api/procscan-violations/:namespace", handler.DeleteViolations)
 	g.GET("/api/procscan-violations/:namespace", handler.GetViolations)
 	g.GET("/api/procscan-violations", handler.ListViolations)
