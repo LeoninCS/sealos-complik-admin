@@ -17,13 +17,6 @@ import {
   listViolationRecords,
   updateViolationStatus as apiUpdateViolationStatus,
 } from "../lib/api";
-import {
-  banRecords as mockBanRecords,
-  commitmentRecords as mockCommitmentRecords,
-  configRecords as mockConfigRecords,
-  unbanRecords as mockUnbanRecords,
-  violations as mockViolations,
-} from "../data/mockData";
 import { toTimestamp } from "../lib/utils";
 import type {
   ActivityItem,
@@ -327,22 +320,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBanRecords(bans);
       setUnbanRecords(unbans);
       setViolations(violationList);
-
-      if (
-        configs.length === 0 &&
-        commitments.length === 0 &&
-        bans.length === 0 &&
-        unbans.length === 0 &&
-        violationList.length === 0
-      ) {
-        // Keep the UI usable when backend is temporarily unavailable.
-        setConfigRecords(mockConfigRecords);
-        setCommitmentRecords(mockCommitmentRecords);
-        setBanRecords(mockBanRecords);
-        setUnbanRecords(mockUnbanRecords);
-        setViolations(mockViolations);
-        setError("后端接口暂时不可用或数据为空，请检查 8080 服务日志。");
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "加载数据失败");
     } finally {

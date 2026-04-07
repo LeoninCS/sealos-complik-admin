@@ -19,12 +19,19 @@ import type { BanRecord } from "../types";
 
 export function BansPage() {
   const navigate = useNavigate();
-  const { banRecords, deleteBanRecord } = useAppData();
+  const { banRecords, createBanRecord, deleteBanRecord } = useAppData();
   const [selected, setSelected] = useState<BanRecord | null>(null);
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [pendingDelete, setPendingDelete] = useState<BanRecord | null>(null);
+  const [namespace, setNamespace] = useState("");
+  const [reason, setReason] = useState("");
+  const [banStartTime, setBanStartTime] = useState("");
+  const [banEndTime, setBanEndTime] = useState("");
+  const [operatorName, setOperatorName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     return banRecords.filter((item) => {
@@ -36,6 +43,40 @@ export function BansPage() {
       return true;
     });
   }, [activeFilter, banRecords, keyword]);
+
+  const handleCreateBan = async () => {
+    if (!namespace.trim() || !reason.trim() || !banStartTime.trim() || !operatorName.trim()) {
+      setFormError("namespace、原因、开始时间、操作人均为必填。");
+      return;
+    }
+
+    if (banEndTime && new Date(banEndTime).getTime() < new Date(banStartTime).getTime()) {
+      setFormError("结束时间不能早于开始时间。");
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await createBanRecord({
+        namespace: namespace.trim(),
+        reason: reason.trim(),
+        banStartTime,
+        banEndTime: banEndTime || undefined,
+        operatorName: operatorName.trim(),
+      });
+      setOpen(false);
+      setNamespace("");
+      setReason("");
+      setBanStartTime("");
+      setBanEndTime("");
+      setOperatorName("");
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "新增封禁记录失败");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -159,29 +200,43 @@ export function BansPage() {
 
       <Modal
         description="保留简单字段，和当前后端接口一致。"
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          setFormError(null);
+        }}
         open={open}
         title="新增封禁"
       >
         <div className="panel-stack">
           <Field label="namespace">
-            <Input placeholder="例如：prod-finance" />
+            <Input placeholder="例如：prod-finance" value={namespace} onChange={(event) => setNamespace(event.target.value)} />
           </Field>
           <Field label="原因">
-            <Input placeholder="简要说明封禁原因" />
+            <Input placeholder="简要说明封禁原因" value={reason} onChange={(event) => setReason(event.target.value)} />
           </Field>
           <Field label="开始时间">
-            <Input type="datetime-local" />
+            <Input type="datetime-local" value={banStartTime} onChange={(event) => setBanStartTime(event.target.value)} />
           </Field>
           <Field label="结束时间">
-            <Input type="datetime-local" />
+            <Input type="datetime-local" value={banEndTime} onChange={(event) => setBanEndTime(event.target.value)} />
           </Field>
           <Field label="操作人">
-            <Input placeholder="例如：Alice" />
+            <Input placeholder="例如：Alice" value={operatorName} onChange={(event) => setOperatorName(event.target.value)} />
           </Field>
+          {formError ? <div className="muted-text" style={{ color: "#b42318" }}>{formError}</div> : null}
           <div className="button-row">
-            <Button variant="primary" onClick={() => setOpen(false)}>保存封禁记录</Button>
-            <Button variant="secondary" onClick={() => setOpen(false)}>取消</Button>
+            <Button variant="primary" onClick={() => void handleCreateBan()}>
+              {submitting ? "保存中..." : "保存封禁记录"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setOpen(false);
+                setFormError(null);
+              }}
+            >
+              取消
+            </Button>
           </div>
         </div>
       </Modal>

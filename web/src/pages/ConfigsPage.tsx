@@ -17,15 +17,55 @@ import { useAppData } from "../contexts/AppDataContext";
 import type { ConfigRecord } from "../types";
 
 export function ConfigsPage() {
-  const { configRecords, deleteConfigRecord } = useAppData();
+  const { configRecords, createConfigRecord, deleteConfigRecord } = useAppData();
   const [selected, setSelected] = useState<ConfigRecord | null>(null);
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [pendingDelete, setPendingDelete] = useState<ConfigRecord | null>(null);
+  const [configName, setConfigName] = useState("");
+  const [configType, setConfigType] = useState("json");
+  const [description, setDescription] = useState("");
+  const [value, setValue] = useState('{\n  "enabled": true,\n  "threshold": 3\n}');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     return configRecords.filter((item) => item.configName.toLowerCase().includes(keyword.toLowerCase()));
   }, [configRecords, keyword]);
+
+  const handleCreateConfig = async () => {
+    if (!configName.trim() || !configType.trim() || !value.trim()) {
+      setFormError("配置名、配置类型和 JSON 内容均为必填。");
+      return;
+    }
+
+    try {
+      JSON.parse(value);
+    } catch {
+      setFormError("JSON 内容格式不正确，请检查后再提交。");
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await createConfigRecord({
+        configName: configName.trim(),
+        configType: configType.trim(),
+        description: description.trim(),
+        value: value.trim(),
+      });
+      setOpen(false);
+      setConfigName("");
+      setConfigType("json");
+      setDescription("");
+      setValue('{\n  "enabled": true,\n  "threshold": 3\n}');
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "新增配置失败");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -127,28 +167,42 @@ export function ConfigsPage() {
 
       <Modal
         description="演示用表单，结构与后续真实接口表单保持一致。"
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          setFormError(null);
+        }}
         open={open}
         title="新增配置"
       >
         <div className="panel-stack">
           <Field label="配置名">
-            <Input placeholder="例如：project-config-demo" />
+            <Input placeholder="例如：project-config-demo" value={configName} onChange={(event) => setConfigName(event.target.value)} />
           </Field>
           <Field label="配置类型">
-            <Select defaultValue="json">
+            <Select value={configType} onChange={(event) => setConfigType(event.target.value)}>
               <option value="json">json</option>
             </Select>
           </Field>
           <Field label="描述">
-            <Input placeholder="简短说明用途" />
+            <Input placeholder="简短说明用途" value={description} onChange={(event) => setDescription(event.target.value)} />
           </Field>
           <Field label="JSON 内容">
-            <TextArea defaultValue={`{\n  "enabled": true,\n  "threshold": 3\n}`} />
+            <TextArea value={value} onChange={(event) => setValue(event.target.value)} />
           </Field>
+          {formError ? <div className="muted-text" style={{ color: "#b42318" }}>{formError}</div> : null}
           <div className="button-row">
-            <Button variant="primary" onClick={() => setOpen(false)}>保存配置</Button>
-            <Button variant="secondary" onClick={() => setOpen(false)}>取消</Button>
+            <Button variant="primary" onClick={() => void handleCreateConfig()}>
+              {submitting ? "保存中..." : "保存配置"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setOpen(false);
+                setFormError(null);
+              }}
+            >
+              取消
+            </Button>
           </div>
         </div>
       </Modal>

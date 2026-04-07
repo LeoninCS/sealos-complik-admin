@@ -17,15 +17,45 @@ import type { CommitmentRecord } from "../types";
 
 export function CommitmentsPage() {
   const navigate = useNavigate();
-  const { commitmentRecords, deleteCommitmentRecord } = useAppData();
+  const { commitmentRecords, createCommitmentRecord, deleteCommitmentRecord } = useAppData();
   const [selected, setSelected] = useState<CommitmentRecord | null>(null);
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [pendingDelete, setPendingDelete] = useState<CommitmentRecord | null>(null);
+  const [namespace, setNamespace] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [fileUrl, setFileUrl] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     return commitmentRecords.filter((item) => item.namespace.toLowerCase().includes(keyword.toLowerCase()));
   }, [commitmentRecords, keyword]);
+
+  const handleCreateCommitment = async () => {
+    if (!namespace.trim() || !fileName.trim() || !fileUrl.trim()) {
+      setFormError("namespace、文件名和文件链接均为必填。");
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await createCommitmentRecord({
+        namespace: namespace.trim(),
+        fileName: fileName.trim(),
+        fileUrl: fileUrl.trim(),
+      });
+      setOpen(false);
+      setNamespace("");
+      setFileName("");
+      setFileUrl("");
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "新增承诺书记录失败");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -135,23 +165,41 @@ export function CommitmentsPage() {
 
       <Modal
         description="演示用新增承诺书表单。"
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          setFormError(null);
+        }}
         open={open}
         title="新增承诺书记录"
       >
         <div className="panel-stack">
           <Field label="namespace">
-            <Input placeholder="例如：prod-finance" />
+            <Input placeholder="例如：prod-finance" value={namespace} onChange={(event) => setNamespace(event.target.value)} />
           </Field>
           <Field label="文件名">
-            <Input placeholder="例如：commitment.pdf" />
+            <Input placeholder="例如：commitment.pdf" value={fileName} onChange={(event) => setFileName(event.target.value)} />
           </Field>
           <Field label="文件链接">
-            <Input placeholder="https://files.example.com/commitment.pdf" />
+            <Input
+              placeholder="https://files.example.com/commitment.pdf"
+              value={fileUrl}
+              onChange={(event) => setFileUrl(event.target.value)}
+            />
           </Field>
+          {formError ? <div className="muted-text" style={{ color: "#b42318" }}>{formError}</div> : null}
           <div className="button-row">
-            <Button variant="primary" onClick={() => setOpen(false)}>保存记录</Button>
-            <Button variant="secondary" onClick={() => setOpen(false)}>取消</Button>
+            <Button variant="primary" onClick={() => void handleCreateCommitment()}>
+              {submitting ? "保存中..." : "保存记录"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setOpen(false);
+                setFormError(null);
+              }}
+            >
+              取消
+            </Button>
           </div>
         </div>
       </Modal>

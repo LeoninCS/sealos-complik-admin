@@ -18,15 +18,42 @@ import type { UnbanRecord } from "../types";
 
 export function UnbansPage() {
   const navigate = useNavigate();
-  const { unbanRecords, deleteUnbanRecord } = useAppData();
+  const { createUnbanRecord, unbanRecords, deleteUnbanRecord } = useAppData();
   const [selected, setSelected] = useState<UnbanRecord | null>(null);
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [pendingDelete, setPendingDelete] = useState<UnbanRecord | null>(null);
+  const [namespace, setNamespace] = useState("");
+  const [operatorName, setOperatorName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     return unbanRecords.filter((item) => item.namespace.toLowerCase().includes(keyword.toLowerCase()));
   }, [keyword, unbanRecords]);
+
+  const handleCreateUnban = async () => {
+    if (!namespace.trim() || !operatorName.trim()) {
+      setFormError("namespace 和操作人均为必填。");
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await createUnbanRecord({
+        namespace: namespace.trim(),
+        operatorName: operatorName.trim(),
+      });
+      setOpen(false);
+      setNamespace("");
+      setOperatorName("");
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "新增解封记录失败");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -132,20 +159,34 @@ export function UnbansPage() {
 
       <Modal
         description="只保留 namespace 和操作人两个必填项。"
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          setFormError(null);
+        }}
         open={open}
         title="新增解封"
       >
         <div className="panel-stack">
           <Field label="namespace">
-            <Input placeholder="例如：growth-ops" />
+            <Input placeholder="例如：growth-ops" value={namespace} onChange={(event) => setNamespace(event.target.value)} />
           </Field>
           <Field label="操作人">
-            <Input placeholder="例如：Bob" />
+            <Input placeholder="例如：Bob" value={operatorName} onChange={(event) => setOperatorName(event.target.value)} />
           </Field>
+          {formError ? <div className="muted-text" style={{ color: "#b42318" }}>{formError}</div> : null}
           <div className="button-row">
-            <Button variant="primary" onClick={() => setOpen(false)}>保存解封记录</Button>
-            <Button variant="secondary" onClick={() => setOpen(false)}>取消</Button>
+            <Button variant="primary" onClick={() => void handleCreateUnban()}>
+              {submitting ? "保存中..." : "保存解封记录"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setOpen(false);
+                setFormError(null);
+              }}
+            >
+              取消
+            </Button>
           </div>
         </div>
       </Modal>
