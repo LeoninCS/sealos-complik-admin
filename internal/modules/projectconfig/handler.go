@@ -43,6 +43,10 @@ func (h *Handler) CreateProjectConfig(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{
 				"message": err.Error(),
 			})
+		case errors.Is(err, ErrProjectConfigTypeConflict):
+			c.JSON(http.StatusConflict, gin.H{
+				"message": err.Error(),
+			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "failed to create project config",
@@ -173,6 +177,10 @@ func (h *Handler) respondWithServiceError(c *gin.Context, err error, fallbackMes
 			"message": err.Error(),
 		})
 	case errors.Is(err, ErrProjectConfigAlreadyExists):
+		c.JSON(http.StatusConflict, gin.H{
+			"message": err.Error(),
+		})
+	case errors.Is(err, ErrProjectConfigTypeConflict):
 		c.JSON(http.StatusConflict, gin.H{
 			"message": err.Error(),
 		})

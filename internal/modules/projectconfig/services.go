@@ -15,10 +15,17 @@ var (
 	ErrProjectConfigInvalidJSON   = errors.New("project config value must be valid json")
 	ErrProjectConfigInvalidInput  = errors.New("config name and config type are required")
 	ErrProjectConfigNotFound      = errors.New("project config not found")
+	ErrProjectConfigTypeConflict  = errors.New("single type config already exists")
 )
 
 type Service struct {
 	repository *Repository
+}
+
+var singleConfigTypes = map[string]struct{}{
+	"model_runtime":                  {},
+	"complick_notifications_runtime": {},
+	"complik_notifications_runtime":  {},
 }
 
 func NewService(repository *Repository) *Service {
@@ -29,6 +36,9 @@ func NewService(repository *Repository) *Service {
 func (s *Service) CreateProjectConfig(ctx context.Context, req CreateProjectConfigRequest) error {
 	input, err := normalizeProjectConfigInput(req.ConfigName, req.ConfigType, req.ConfigValue, req.Description)
 	if err != nil {
+		return err
+	}
+	if err := s.validateTypeCardinality(ctx, input.ConfigType, ""); err != nil {
 		return err
 	}
 	projectConfig := &ProjectConfig{
@@ -55,6 +65,9 @@ func (s *Service) UpdateProjectConfig(ctx context.Context, configName string, re
 
 	input, err := normalizeProjectConfigInput(req.ConfigName, req.ConfigType, req.ConfigValue, req.Description)
 	if err != nil {
+		return err
+	}
+	if err := s.validateTypeCardinality(ctx, input.ConfigType, strings.TrimSpace(configName)); err != nil {
 		return err
 	}
 
@@ -151,6 +164,23 @@ func normalizeProjectConfigInput(configName, configType string, configValue json
 		ConfigValue: configValue,
 		Description: trimmedDescription,
 	}, nil
+}
+
+// validateTypeCardinality enforces single-entry types while allowing multi-entry types.
+func (s *Service) validateTypeCardinality(ctx context.Context, configType, excludeConfigName string) error {
+	normalizedType := strings.TrimSpace(configType)
+	if _, isSingle := singleConfigTypes[normalizedType]; !isSingle {
+		return nil
+	}
+
+	count, err := s.repository.CountProjectConfigsByType(ctx, normalizedType, excludeConfigName)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return ErrProjectConfigTypeConflict
+	}
+	return nil
 }
 
 // translateRepositoryError hides storage details from the handler layer.
