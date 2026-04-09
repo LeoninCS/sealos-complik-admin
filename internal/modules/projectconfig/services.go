@@ -24,7 +24,7 @@ type Service struct {
 
 var singleConfigTypes = map[string]struct{}{
 	"model_runtime":                  {},
-	"complick_notifications_runtime": {},
+	"procscan_notifications_runtime": {},
 	"complik_notifications_runtime":  {},
 }
 
