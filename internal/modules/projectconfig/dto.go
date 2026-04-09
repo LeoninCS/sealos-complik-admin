@@ -9,6 +9,10 @@ type ProjectConfigNameRequest struct {
 	ConfigName string `uri:"config_name" binding:"required,max=255"`
 }
 
+type ProjectConfigTypeRequest struct {
+	ConfigType string `uri:"config_type" binding:"required,max=50"`
+}
+
 type CreateProjectConfigRequest struct {
 	ConfigName  string          `json:"config_name" binding:"required,max=255"`
 	ConfigType  string          `json:"config_type" binding:"required,max=50"`

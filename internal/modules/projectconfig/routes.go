@@ -17,4 +17,5 @@ func InitProjectConfigRoutes(g *gin.Engine) {
 	g.PUT("/api/configs/:config_name", handler.UpdateProjectConfig)
 	g.GET("/api/configs/:config_name", handler.GetProjectConfig)
 	g.GET("/api/configs", handler.ListProjectConfigs)
+	g.GET("/api/configs/type/:config_type", handler.ListProjectConfigsByType)
 }

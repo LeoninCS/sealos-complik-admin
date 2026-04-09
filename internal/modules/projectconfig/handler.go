@@ -127,6 +127,26 @@ func (h *Handler) ListProjectConfigs(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// ListProjectConfigsByType handles listing project configurations by config type.
+func (h *Handler) ListProjectConfigsByType(c *gin.Context) {
+	var req ProjectConfigTypeRequest
+	if err := c.ShouldBindUri(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid request path",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	resp, err := h.service.ListProjectConfigsByType(c.Request.Context(), req.ConfigType)
+	if err != nil {
+		h.respondWithServiceError(c, err, "failed to list project configs by type")
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 // bindProjectConfigName extracts the config name from the URI and validates it.
 func bindProjectConfigName(c *gin.Context) (string, bool) {
 	var req ProjectConfigNameRequest

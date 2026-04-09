@@ -104,6 +104,26 @@ func (s *Service) ListProjectConfigs(ctx context.Context) ([]ProjectConfigRespon
 	return responses, nil
 }
 
+// ListProjectConfigsByType returns project configurations filtered by config type.
+func (s *Service) ListProjectConfigsByType(ctx context.Context, configType string) ([]ProjectConfigResponse, error) {
+	trimmedType := strings.TrimSpace(configType)
+	if trimmedType == "" {
+		return nil, ErrProjectConfigInvalidInput
+	}
+
+	projectConfigs, err := s.repository.ListProjectConfigsByType(ctx, trimmedType)
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]ProjectConfigResponse, 0, len(projectConfigs))
+	for i := range projectConfigs {
+		responses = append(responses, *toProjectConfigResponse(&projectConfigs[i]))
+	}
+
+	return responses, nil
+}
+
 type normalizedProjectConfigInput struct {
 	ConfigName  string
 	ConfigType  string

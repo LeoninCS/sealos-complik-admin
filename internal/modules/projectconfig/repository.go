@@ -39,6 +39,19 @@ func (r *Repository) ListProjectConfigs(ctx context.Context) ([]ProjectConfig, e
 	return projectConfigs, nil
 }
 
+// ListProjectConfigsByType returns project configurations filtered by config type.
+func (r *Repository) ListProjectConfigsByType(ctx context.Context, configType string) ([]ProjectConfig, error) {
+	var projectConfigs []ProjectConfig
+	if err := r.db.WithContext(ctx).
+		Where("config_type = ?", configType).
+		Order("id ASC").
+		Find(&projectConfigs).Error; err != nil {
+		return nil, err
+	}
+
+	return projectConfigs, nil
+}
+
 // UpdateProjectConfig updates an existing project configuration in the database.
 func (r *Repository) UpdateProjectConfig(ctx context.Context, projectConfig *ProjectConfig) error {
 	return r.db.WithContext(ctx).Save(projectConfig).Error
