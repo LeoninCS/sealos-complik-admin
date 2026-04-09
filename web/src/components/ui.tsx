@@ -90,7 +90,8 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
 }
 
 export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className="text-area" {...props} />;
+  const { className, ...rest } = props;
+  return <textarea className={cn("text-area", className)} {...rest} />;
 }
 
 export function EmptyState({

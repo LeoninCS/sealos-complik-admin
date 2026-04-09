@@ -187,9 +187,6 @@ export function ViolationsPage() {
                         {submittingStatus === item.id ? "处理中..." : "设为已处理"}
                       </Button>
                     ) : null}
-                    <Button variant="danger" onClick={() => setPendingDelete(item)}>
-                      删除
-                    </Button>
                   </td>
                 </tr>
               ))}

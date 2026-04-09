@@ -126,6 +126,8 @@ export type CreateConfigInput = {
   value: string;
 };
 
+export type UpdateConfigInput = CreateConfigInput;
+
 export type CreateCommitmentInput = {
   namespace: string;
   fileName: string;
@@ -171,6 +173,7 @@ export type AppDataContextValue = {
   violations: ViolationRecord[];
   refreshAll: () => Promise<void>;
   createConfigRecord: (input: CreateConfigInput) => Promise<void>;
+  updateConfigRecord: (configName: string, input: UpdateConfigInput) => Promise<void>;
   createCommitmentRecord: (input: CreateCommitmentInput) => Promise<void>;
   createBanRecord: (input: CreateBanInput) => Promise<void>;
   createUnbanRecord: (input: CreateUnbanInput) => Promise<void>;

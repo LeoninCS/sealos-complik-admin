@@ -6,6 +6,7 @@ import type {
   CreateBanInput,
   CreateCommitmentInput,
   CreateConfigInput,
+  UpdateConfigInput,
   CreateUnbanInput,
   UnbanRecord,
   UpdateViolationStatusInput,
@@ -236,6 +237,18 @@ export async function createConfigRecord(input: CreateConfigInput) {
 export async function deleteConfigRecord(configName: string) {
   await request(`/api/configs/${encodeURIComponent(configName)}`, {
     method: "DELETE",
+  });
+}
+
+export async function updateConfigRecord(configName: string, input: UpdateConfigInput) {
+  await request(`/api/configs/${encodeURIComponent(configName)}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      config_name: input.configName,
+      config_type: input.configType,
+      description: input.description,
+      config_value: JSON.parse(input.value),
+    }),
   });
 }
 

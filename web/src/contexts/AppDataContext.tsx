@@ -15,6 +15,7 @@ import {
   listConfigRecords,
   listUnbanRecords,
   listViolationRecords,
+  updateConfigRecord as apiUpdateConfigRecord,
   updateViolationStatus as apiUpdateViolationStatus,
 } from "../lib/api";
 import { toTimestamp } from "../lib/utils";
@@ -33,6 +34,7 @@ import type {
   StatCardItem,
   TimelineRecord,
   UnbanRecord,
+  UpdateConfigInput,
   ViolationRecord,
 } from "../types";
 
@@ -69,6 +71,7 @@ const defaultValue: AppDataContextValue = {
   violations: [],
   refreshAll: async () => undefined,
   createConfigRecord: async () => undefined,
+  updateConfigRecord: async () => undefined,
   createCommitmentRecord: async () => undefined,
   createBanRecord: async () => undefined,
   createUnbanRecord: async () => undefined,
@@ -350,6 +353,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [refreshAll],
   );
 
+  const updateConfigRecord = useCallback(
+    async (configName: string, input: UpdateConfigInput) => {
+      await apiUpdateConfigRecord(configName, input);
+      await refreshAll();
+    },
+    [refreshAll],
+  );
+
   const createCommitmentRecord = useCallback(
     async (input: CreateCommitmentInput) => {
       await apiCreateCommitmentRecord(input);
@@ -446,6 +457,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       violations,
       refreshAll,
       createConfigRecord,
+      updateConfigRecord,
       createCommitmentRecord,
       createBanRecord,
       createUnbanRecord,
@@ -464,6 +476,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       createCommitmentRecord,
       createConfigRecord,
       createUnbanRecord,
+      updateConfigRecord,
       deleteBanRecord,
       deleteCommitmentRecord,
       deleteConfigRecord,

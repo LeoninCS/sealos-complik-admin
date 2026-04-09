@@ -438,6 +438,17 @@ table {
   resize: vertical;
 }
 
+.json-text-area {
+  min-height: 260px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
 .field {
   display: grid;
   gap: 10px;

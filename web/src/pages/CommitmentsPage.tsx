@@ -109,9 +109,6 @@ export function CommitmentsPage() {
                     <Button variant="ghost" onClick={() => setSelected(item)}>
                       查看
                     </Button>
-                    <Button variant="danger" onClick={() => setPendingDelete(item)}>
-                      删除
-                    </Button>
                   </td>
                 </tr>
               ))}
