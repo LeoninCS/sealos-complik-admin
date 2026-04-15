@@ -2,7 +2,6 @@ package projectconfig
 
 import (
 	"context"
-	"strings"
 
 	"gorm.io/gorm"
 )
@@ -51,20 +50,6 @@ func (r *Repository) ListProjectConfigsByType(ctx context.Context, configType st
 	}
 
 	return projectConfigs, nil
-}
-
-// CountProjectConfigsByType counts configs for a type, optionally excluding one config name.
-func (r *Repository) CountProjectConfigsByType(ctx context.Context, configType, excludeConfigName string) (int64, error) {
-	query := r.db.WithContext(ctx).Model(&ProjectConfig{}).Where("config_type = ?", configType)
-	if strings.TrimSpace(excludeConfigName) != "" {
-		query = query.Where("config_name <> ?", strings.TrimSpace(excludeConfigName))
-	}
-
-	var count int64
-	if err := query.Count(&count).Error; err != nil {
-		return 0, err
-	}
-	return count, nil
 }
 
 // UpdateProjectConfig updates an existing project configuration in the database.

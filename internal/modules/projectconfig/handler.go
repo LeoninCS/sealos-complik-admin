@@ -43,10 +43,6 @@ func (h *Handler) CreateProjectConfig(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{
 				"message": err.Error(),
 			})
-		case errors.Is(err, ErrProjectConfigTypeConflict):
-			c.JSON(http.StatusConflict, gin.H{
-				"message": err.Error(),
-			})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "failed to create project config",
@@ -131,18 +127,14 @@ func (h *Handler) ListProjectConfigs(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// ListProjectConfigsByType handles listing project configurations by config type.
+// ListProjectConfigsByType handles listing project configurations filtered by config type.
 func (h *Handler) ListProjectConfigsByType(c *gin.Context) {
-	var req ProjectConfigTypeRequest
-	if err := c.ShouldBindUri(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "invalid request path",
-			"error":   err.Error(),
-		})
+	configType, ok := bindProjectConfigType(c)
+	if !ok {
 		return
 	}
 
-	resp, err := h.service.ListProjectConfigsByType(c.Request.Context(), req.ConfigType)
+	resp, err := h.service.ListProjectConfigsByType(c.Request.Context(), configType)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to list project configs by type")
 		return
@@ -165,6 +157,20 @@ func bindProjectConfigName(c *gin.Context) (string, bool) {
 	return req.ConfigName, true
 }
 
+// bindProjectConfigType extracts the config type from the URI and validates it.
+func bindProjectConfigType(c *gin.Context) (string, bool) {
+	var req ProjectConfigTypeRequest
+	if err := c.ShouldBindUri(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid request path",
+			"error":   err.Error(),
+		})
+		return "", false
+	}
+
+	return req.ConfigType, true
+}
+
 // respondWithServiceError handles responding with appropriate error messages based on the service error.
 func (h *Handler) respondWithServiceError(c *gin.Context, err error, fallbackMessage string) {
 	switch {
@@ -177,10 +183,6 @@ func (h *Handler) respondWithServiceError(c *gin.Context, err error, fallbackMes
 			"message": err.Error(),
 		})
 	case errors.Is(err, ErrProjectConfigAlreadyExists):
-		c.JSON(http.StatusConflict, gin.H{
-			"message": err.Error(),
-		})
-	case errors.Is(err, ErrProjectConfigTypeConflict):
 		c.JSON(http.StatusConflict, gin.H{
 			"message": err.Error(),
 		})
