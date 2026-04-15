@@ -10,9 +10,8 @@ import {
   Input,
   Modal,
   PageHeader,
-  Select,
-  StatusPill,
   SurfaceCard,
+  StatusPill,
 } from "../components/ui";
 import { useAppData } from "../contexts/AppDataContext";
 import type { BanRecord } from "../types";
@@ -23,12 +22,10 @@ export function BansPage() {
   const [selected, setSelected] = useState<BanRecord | null>(null);
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
   const [pendingDelete, setPendingDelete] = useState<BanRecord | null>(null);
   const [namespace, setNamespace] = useState("");
   const [reason, setReason] = useState("");
   const [banStartTime, setBanStartTime] = useState("");
-  const [banEndTime, setBanEndTime] = useState("");
   const [operatorName, setOperatorName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -38,20 +35,13 @@ export function BansPage() {
       if (keyword && !item.namespace.toLowerCase().includes(keyword.toLowerCase())) {
         return false;
       }
-      if (activeFilter === "active") return item.active;
-      if (activeFilter === "inactive") return !item.active;
       return true;
     });
-  }, [activeFilter, banRecords, keyword]);
+  }, [banRecords, keyword]);
 
   const handleCreateBan = async () => {
     if (!namespace.trim() || !reason.trim() || !banStartTime.trim() || !operatorName.trim()) {
       setFormError("namespace、原因、开始时间、操作人均为必填。");
-      return;
-    }
-
-    if (banEndTime && new Date(banEndTime).getTime() < new Date(banStartTime).getTime()) {
-      setFormError("结束时间不能早于开始时间。");
       return;
     }
 
@@ -62,14 +52,12 @@ export function BansPage() {
         namespace: namespace.trim(),
         reason: reason.trim(),
         banStartTime,
-        banEndTime: banEndTime || undefined,
         operatorName: operatorName.trim(),
       });
       setOpen(false);
       setNamespace("");
       setReason("");
       setBanStartTime("");
-      setBanEndTime("");
       setOperatorName("");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "新增封禁记录失败");
@@ -92,22 +80,8 @@ export function BansPage() {
           <Field label="namespace">
             <Input placeholder="按 namespace 搜索" value={keyword} onChange={(event) => setKeyword(event.target.value)} />
           </Field>
-          <Field label="当前是否有效">
-            <Select value={activeFilter} onChange={(event) => setActiveFilter(event.target.value)}>
-              <option value="all">全部记录</option>
-              <option value="active">当前有效</option>
-              <option value="inactive">历史记录</option>
-            </Select>
-          </Field>
           <Field label="操作人">
             <Input placeholder="例如：Alice" />
-          </Field>
-          <Field label="时间范围">
-            <Select defaultValue="7d">
-              <option value="24h">最近 24 小时</option>
-              <option value="7d">最近 7 天</option>
-              <option value="30d">最近 30 天</option>
-            </Select>
           </Field>
         </div>
       </SurfaceCard>
@@ -120,7 +94,6 @@ export function BansPage() {
                 <th>namespace</th>
                 <th>原因</th>
                 <th>开始时间</th>
-                <th>结束时间</th>
                 <th>操作人</th>
                 <th>状态</th>
                 <th>操作</th>
@@ -140,10 +113,9 @@ export function BansPage() {
                     </button>
                   </td>
                   <td>{item.banStartTime}</td>
-                  <td>{item.banEndTime ?? "-"}</td>
                   <td>{item.operatorName}</td>
                   <td>
-                    <StatusPill tone={item.active ? "warn" : "neutral"}>{item.active ? "当前有效" : "历史记录"}</StatusPill>
+                    <StatusPill tone="warn">永久封禁</StatusPill>
                   </td>
                   <td>
                     <Button variant="ghost" onClick={() => setSelected(item)}>
@@ -178,9 +150,8 @@ export function BansPage() {
                 { label: "namespace", value: selected.namespace },
                 { label: "原因", value: selected.reason },
                 { label: "开始时间", value: selected.banStartTime },
-                { label: "结束时间", value: selected.banEndTime ?? "-" },
                 { label: "操作人", value: selected.operatorName },
-                { label: "状态", value: selected.active ? "当前有效" : "历史记录" },
+                { label: "状态", value: "永久封禁" },
               ]}
             />
             <div className="button-row" style={{ marginTop: 20 }}>
@@ -213,9 +184,6 @@ export function BansPage() {
           </Field>
           <Field label="开始时间">
             <Input type="datetime-local" value={banStartTime} onChange={(event) => setBanStartTime(event.target.value)} />
-          </Field>
-          <Field label="结束时间">
-            <Input type="datetime-local" value={banEndTime} onChange={(event) => setBanEndTime(event.target.value)} />
           </Field>
           <Field label="操作人">
             <Input placeholder="例如：Alice" value={operatorName} onChange={(event) => setOperatorName(event.target.value)} />

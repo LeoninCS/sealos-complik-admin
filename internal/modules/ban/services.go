@@ -126,7 +126,8 @@ func normalizeBanInput(namespace, reason string, banStartTime time.Time, banEndT
 	if trimmedNamespace == "" || banStartTime.IsZero() || trimmedOperatorName == "" {
 		return nil, ErrBanInvalidInput
 	}
-	if banEndTime != nil && banEndTime.Before(banStartTime) {
+	// Permanent ban only: reject any non-nil end time.
+	if banEndTime != nil {
 		return nil, ErrBanInvalidInput
 	}
 
@@ -134,7 +135,7 @@ func normalizeBanInput(namespace, reason string, banStartTime time.Time, banEndT
 		Namespace:    trimmedNamespace,
 		Reason:       trimmedReason,
 		BanStartTime: banStartTime,
-		BanEndTime:   banEndTime,
+		BanEndTime:   nil,
 		OperatorName: trimmedOperatorName,
 	}, nil
 }
