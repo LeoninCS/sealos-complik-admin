@@ -88,7 +88,8 @@ type ProcscanViolationDto = {
 
 async function request<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
-  if (!headers.has("Content-Type")) {
+  const shouldSetJSONContentType = !(init?.body instanceof FormData);
+  if (shouldSetJSONContentType && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -258,20 +259,44 @@ export async function listCommitmentRecords() {
 }
 
 export async function createCommitmentRecord(input: CreateCommitmentInput) {
-  await request("/api/commitments", {
-    method: "POST",
-    body: JSON.stringify({
-      namespace: input.namespace,
-      file_name: input.fileName,
-      file_url: input.fileUrl,
-    }),
-  });
+  const formData = new FormData();
+  formData.set("namespace", input.namespace);
+  formData.set("file", input.file);
+
+  try {
+    await request("/api/commitments/upload", {
+      method: "POST",
+      body: formData,
+    });
+  } catch (error) {
+    // Backward compatibility: older backends expose upload at POST /api/commitments.
+    if (error instanceof Error && error.message.includes("404")) {
+      try {
+        await request("/api/commitments", {
+          method: "POST",
+          body: formData,
+        });
+        return;
+      } catch (legacyError) {
+        if (legacyError instanceof Error && legacyError.message.includes("invalid request body")) {
+          throw new Error("后端版本过旧：暂不支持承诺书文件上传，请先升级后端服务。");
+        }
+        throw legacyError;
+      }
+    }
+
+    throw error;
+  }
 }
 
 export async function deleteCommitmentRecord(namespace: string) {
   await request(`/api/commitments/${encodeURIComponent(namespace)}`, {
     method: "DELETE",
   });
+}
+
+export function buildCommitmentDownloadURL(namespace: string) {
+  return `/api/commitments/${encodeURIComponent(namespace)}/download`;
 }
 
 export async function listBanRecords() {

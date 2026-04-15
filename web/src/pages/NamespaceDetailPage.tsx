@@ -13,6 +13,7 @@ import {
   SurfaceCard,
 } from "../components/ui";
 import { useAppData } from "../contexts/AppDataContext";
+import { buildCommitmentDownloadURL } from "../lib/api";
 import { formatStateLabel } from "../lib/utils";
 import type { ViolationRecord } from "../types";
 
@@ -157,8 +158,8 @@ export function NamespaceDetailPage() {
                 {
                   label: "文件链接",
                   value: (
-                    <a className="namespace-link" href={profile.commitment.fileUrl} rel="noreferrer" target="_blank">
-                      打开文件
+                    <a className="namespace-link" href={buildCommitmentDownloadURL(profile.namespace)}>
+                      下载文件
                       <ArrowRight size={14} />
                     </a>
                   ),

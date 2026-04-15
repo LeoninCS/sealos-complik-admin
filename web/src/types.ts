@@ -130,8 +130,7 @@ export type UpdateConfigInput = CreateConfigInput;
 
 export type CreateCommitmentInput = {
   namespace: string;
-  fileName: string;
-  fileUrl: string;
+  file: File;
 };
 
 export type CreateBanInput = {

@@ -13,6 +13,7 @@ import {
   SurfaceCard,
 } from "../components/ui";
 import { useAppData } from "../contexts/AppDataContext";
+import { buildCommitmentDownloadURL } from "../lib/api";
 import type { CommitmentRecord } from "../types";
 
 export function CommitmentsPage() {
@@ -23,8 +24,7 @@ export function CommitmentsPage() {
   const [keyword, setKeyword] = useState("");
   const [pendingDelete, setPendingDelete] = useState<CommitmentRecord | null>(null);
   const [namespace, setNamespace] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [fileUrl, setFileUrl] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -33,8 +33,12 @@ export function CommitmentsPage() {
   }, [commitmentRecords, keyword]);
 
   const handleCreateCommitment = async () => {
-    if (!namespace.trim() || !fileName.trim() || !fileUrl.trim()) {
-      setFormError("namespace、文件名和文件链接均为必填。");
+    if (!namespace.trim() || !file) {
+      setFormError("namespace 和承诺书 PDF 文件均为必填。");
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      setFormError("只允许上传 PDF 文件。");
       return;
     }
 
@@ -43,15 +47,13 @@ export function CommitmentsPage() {
     try {
       await createCommitmentRecord({
         namespace: namespace.trim(),
-        fileName: fileName.trim(),
-        fileUrl: fileUrl.trim(),
+        file,
       });
       setOpen(false);
       setNamespace("");
-      setFileName("");
-      setFileUrl("");
+      setFile(null);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "新增承诺书记录失败");
+      setFormError(err instanceof Error ? err.message : "上传承诺书失败");
     } finally {
       setSubmitting(false);
     }
@@ -100,8 +102,8 @@ export function CommitmentsPage() {
                     </button>
                   </td>
                   <td>
-                    <a className="namespace-link" href={item.fileUrl} rel="noreferrer" target="_blank">
-                      打开文件
+                    <a className="namespace-link" href={buildCommitmentDownloadURL(item.namespace)}>
+                      下载文件
                     </a>
                   </td>
                   <td>{item.updatedAt}</td>
@@ -141,8 +143,8 @@ export function CommitmentsPage() {
                 {
                   label: "文件链接",
                   value: (
-                    <a className="namespace-link" href={selected.fileUrl} rel="noreferrer" target="_blank">
-                      打开文件
+                    <a className="namespace-link" href={buildCommitmentDownloadURL(selected.namespace)}>
+                      下载文件
                     </a>
                   ),
                 },
@@ -161,32 +163,30 @@ export function CommitmentsPage() {
       </Drawer>
 
       <Modal
-        description="演示用新增承诺书表单。"
+        description="上传 namespace 对应的承诺书 PDF。"
         onClose={() => {
           setOpen(false);
           setFormError(null);
         }}
         open={open}
-        title="新增承诺书记录"
+        title="上传承诺书"
       >
         <div className="panel-stack">
           <Field label="namespace">
             <Input placeholder="例如：prod-finance" value={namespace} onChange={(event) => setNamespace(event.target.value)} />
           </Field>
-          <Field label="文件名">
-            <Input placeholder="例如：commitment.pdf" value={fileName} onChange={(event) => setFileName(event.target.value)} />
-          </Field>
-          <Field label="文件链接">
+          <Field label="PDF 文件">
             <Input
-              placeholder="https://files.example.com/commitment.pdf"
-              value={fileUrl}
-              onChange={(event) => setFileUrl(event.target.value)}
+              accept=".pdf,application/pdf"
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              type="file"
             />
           </Field>
+          {file ? <div className="muted-text">已选择：{file.name}</div> : null}
           {formError ? <div className="muted-text" style={{ color: "#b42318" }}>{formError}</div> : null}
           <div className="button-row">
             <Button variant="primary" onClick={() => void handleCreateCommitment()}>
-              {submitting ? "保存中..." : "保存记录"}
+              {submitting ? "上传中..." : "上传并保存"}
             </Button>
             <Button
               variant="secondary"
