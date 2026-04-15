@@ -21,7 +21,6 @@ export function ConfigsPage() {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [nameKeyword, setNameKeyword] = useState("");
-  const [typeKeyword, setTypeKeyword] = useState("");
   const [pendingDelete, setPendingDelete] = useState<ConfigRecord | null>(null);
   const [configName, setConfigName] = useState("");
   const [configType, setConfigType] = useState("");
@@ -41,12 +40,9 @@ export function ConfigsPage() {
       if (nameKeyword && !item.configName.toLowerCase().includes(nameKeyword.toLowerCase())) {
         return false;
       }
-      if (typeKeyword && !item.configType.toLowerCase().includes(typeKeyword.toLowerCase())) {
-        return false;
-      }
       return true;
     });
-  }, [configRecords, nameKeyword, typeKeyword]);
+  }, [configRecords, nameKeyword]);
 
   const handleCreateConfig = async () => {
     if (!configName.trim() || !configType.trim() || !value.trim()) {
@@ -167,7 +163,7 @@ export function ConfigsPage() {
       <PageHeader
         kicker="Configs"
         title="项目配置"
-        description="统一查看配置名、类型、描述和 JSON 内容，新增和编辑保持同一套表单结构。"
+        description="统一查看配置名、描述和 JSON 内容，新增和编辑保持同一套表单结构。"
         actions={<Button variant="primary" onClick={() => setOpen(true)}>新增配置</Button>}
       />
 
@@ -175,13 +171,6 @@ export function ConfigsPage() {
         <div className="toolbar">
           <Field label="配置名搜索">
             <Input placeholder="按 config_name 搜索" value={nameKeyword} onChange={(event) => setNameKeyword(event.target.value)} />
-          </Field>
-          <Field label="配置类型搜索">
-            <Input
-              placeholder="按 config_type 搜索，例如 prompt_template"
-              value={typeKeyword}
-              onChange={(event) => setTypeKeyword(event.target.value)}
-            />
           </Field>
         </div>
       </SurfaceCard>
@@ -192,7 +181,6 @@ export function ConfigsPage() {
             <thead>
               <tr>
                 <th>配置名</th>
-                <th>类型</th>
                 <th>描述</th>
                 <th>更新时间</th>
                 <th>操作</th>
@@ -206,7 +194,6 @@ export function ConfigsPage() {
                       {item.configName}
                     </button>
                   </td>
-                  <td>{item.configType}</td>
                   <td>{item.description}</td>
                   <td>{item.updatedAt}</td>
                   <td>
@@ -240,7 +227,6 @@ export function ConfigsPage() {
             <DetailList
               items={[
                 { label: "配置名", value: selected.configName },
-                { label: "配置类型", value: selected.configType },
                 { label: "描述", value: selected.description },
                 { label: "更新时间", value: selected.updatedAt },
               ]}
