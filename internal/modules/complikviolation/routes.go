@@ -13,6 +13,7 @@ func InitRoutes(g *gin.Engine) {
 
 	g.POST("/api/complik-violations", handler.CreateViolation)
 	g.PUT("/api/complik-violations/:id/status", handler.UpdateViolationStatus)
+	g.DELETE("/api/complik-violations/id/:id", handler.DeleteViolationByID)
 	g.DELETE("/api/complik-violations/:namespace", handler.DeleteViolations)
 	g.GET("/api/complik-violations/:namespace", handler.GetViolations)
 	g.GET("/api/complik-violations", handler.ListViolations)

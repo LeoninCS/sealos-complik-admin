@@ -142,9 +142,9 @@ export const violations: ViolationRecord[] = [
     host: "edge.internal",
     url: "https://edge.internal/demo",
     keywords: ["download"],
-    status: "reviewing",
+    status: "open",
     detectedAt: "2026-04-06 17:10",
-    description: "发现可疑 URL，已补充说明，等待复核。",
+    description: "发现可疑 URL，待人工确认。",
   },
   {
     id: "pv-1",

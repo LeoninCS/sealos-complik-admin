@@ -312,7 +312,6 @@ export async function createBanRecord(input: CreateBanInput) {
       reason: input.reason,
       operator_name: input.operatorName,
       ban_start_time: new Date(input.banStartTime).toISOString(),
-      ban_end_time: input.banEndTime ? new Date(input.banEndTime).toISOString() : null,
     }),
   });
 }
@@ -366,9 +365,9 @@ export async function updateViolationStatus(input: UpdateViolationStatusInput) {
   });
 }
 
-export async function deleteViolationRecord(namespace: string, type: ViolationRecord["type"]) {
+export async function deleteViolationRecord(id: number, type: ViolationRecord["type"]) {
   const path = type === "complik" ? "/api/complik-violations" : "/api/procscan-violations";
-  await request(`${path}/${encodeURIComponent(namespace)}`, {
+  await request(`${path}/id/${id}`, {
     method: "DELETE",
   });
 }

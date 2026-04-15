@@ -15,7 +15,7 @@ import {
   SurfaceCard,
 } from "../components/ui";
 import { useAppData } from "../contexts/AppDataContext";
-import { formatStateLabel } from "../lib/utils";
+import { formatStateLabel, formatViolationTypeLabel } from "../lib/utils";
 import type { ViolationRecord, ViolationType } from "../types";
 
 export function ViolationsPage() {
@@ -44,7 +44,7 @@ export function ViolationsPage() {
       <PageHeader
         kicker="Risk Center"
         title="违规中心"
-        description="在同一套布局里查看 CompliK 和 Procscan 两类违规记录，支持人工复核后手动标记为已处理。"
+        description="在同一套布局里查看内容违规和进程违规两类记录，支持手动标记为已处理。"
         actions={
           <Button
             variant="secondary"
@@ -66,7 +66,6 @@ export function ViolationsPage() {
             <Select value={status} onChange={(event) => setStatus(event.target.value)}>
               <option value="all">全部状态</option>
               <option value="open">待处理</option>
-              <option value="reviewing">复核中</option>
               <option value="closed">已关闭</option>
             </Select>
           </Field>
@@ -85,10 +84,10 @@ export function ViolationsPage() {
 
       <div className="tab-row" role="tablist" aria-label="违规类型">
         <button className={`tab-button ${tab === "complik" ? "active" : ""}`} onClick={() => setTab("complik")} type="button">
-          CompliK
+          内容违规
         </button>
         <button className={`tab-button ${tab === "procscan" ? "active" : ""}`} onClick={() => setTab("procscan")} type="button">
-          Procscan
+          进程违规
         </button>
       </div>
 
@@ -114,7 +113,7 @@ export function ViolationsPage() {
           <div style={{ padding: 20 }}>
             <EmptyState
               title="违规数据加载中"
-              description="正在从后端同步 CompliK 和 Procscan 违规记录。"
+              description="正在从后端同步内容违规和进程违规记录。"
             />
           </div>
         ) : rows.length > 0 ? (
@@ -122,8 +121,8 @@ export function ViolationsPage() {
             <thead>
               <tr>
                 <th>namespace</th>
-                <th>{tab === "complik" ? "detector / 资源" : "进程 / Pod"}</th>
-                <th>{tab === "complik" ? "host / URL" : "节点 / 说明"}</th>
+                <th>{tab === "complik" ? "detector" : "进程 / Pod"}</th>
+                <th>{tab === "complik" ? "URL" : "节点 / 说明"}</th>
                 <th>状态</th>
                 <th>发现时间</th>
                 <th>操作</th>
@@ -139,16 +138,22 @@ export function ViolationsPage() {
                   </td>
                   <td>
                     <button className="table-row-button" onClick={() => setSelected(item)} type="button">
-                      <strong>{item.detectorName ?? item.processName}</strong>
-                      <div className="muted-text">{item.resourceName ?? item.podName ?? "-"}</div>
+                      <strong>{tab === "complik" ? (item.detectorName ?? "-") : (item.processName ?? "-")}</strong>
+                      {tab === "complik" ? null : <div className="muted-text">{item.podName ?? "-"}</div>}
                     </button>
                   </td>
                   <td>
-                    <div>{item.host ?? item.nodeName ?? "-"}</div>
-                    <div className="muted-text">{item.url ?? item.message ?? "-"}</div>
+                    {tab === "complik" ? (
+                      <div>{item.url ?? "-"}</div>
+                    ) : (
+                      <>
+                        <div>{item.nodeName ?? "-"}</div>
+                        <div className="muted-text">{item.message ?? "-"}</div>
+                      </>
+                    )}
                   </td>
                   <td>
-                    <StatusPill tone={item.status === "open" ? "danger" : item.status === "reviewing" ? "warn" : "success"}>
+                    <StatusPill tone={item.status === "open" ? "danger" : "success"}>
                       {formatStateLabel(item.status)}
                     </StatusPill>
                   </td>
@@ -157,21 +162,6 @@ export function ViolationsPage() {
                     <Button variant="ghost" onClick={() => setSelected(item)}>
                       查看
                     </Button>
-                    {item.status !== "reviewing" ? (
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          setSubmittingStatus(item.id);
-                          void updateViolationStatus({
-                            id: item.apiId,
-                            type: item.type,
-                            status: "reviewing",
-                          }).finally(() => setSubmittingStatus(null));
-                        }}
-                      >
-                        {submittingStatus === item.id ? "处理中..." : "转复核"}
-                      </Button>
-                    ) : null}
                     {item.status !== "closed" ? (
                       <Button
                         variant="secondary"
@@ -212,7 +202,7 @@ export function ViolationsPage() {
           <>
             <DetailList
               items={[
-                { label: "类型", value: selected.type === "complik" ? "CompliK" : "Procscan" },
+                { label: "类型", value: formatViolationTypeLabel(selected.type) },
                 { label: "namespace", value: selected.namespace },
                 { label: "状态", value: formatStateLabel(selected.status) },
                 { label: "detector / process", value: selected.detectorName ?? selected.processName ?? "-" },
@@ -229,21 +219,6 @@ export function ViolationsPage() {
               <Button variant="secondary" onClick={() => navigate(`/namespaces/${selected.namespace}`)}>
                 查看 namespace 详情
               </Button>
-              {selected.status !== "reviewing" ? (
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setSubmittingStatus(selected.id);
-                    void updateViolationStatus({
-                      id: selected.apiId,
-                      type: selected.type,
-                      status: "reviewing",
-                    }).finally(() => setSubmittingStatus(null));
-                  }}
-                >
-                  {submittingStatus === selected.id ? "处理中..." : "标记为复核中"}
-                </Button>
-              ) : null}
               {selected.status !== "closed" ? (
                 <Button
                   variant="secondary"
@@ -268,12 +243,12 @@ export function ViolationsPage() {
       </Drawer>
 
       <ConfirmModal
-        description={pendingDelete ? `删除后将从当前前端列表中移除 ${pendingDelete.namespace} 的违规记录。` : ""}
+        description={pendingDelete ? `删除后仅移除当前这条违规记录（namespace: ${pendingDelete.namespace}）。` : ""}
         onClose={() => setPendingDelete(null)}
         onConfirm={() => {
           if (!pendingDelete) return;
           void deleteViolationRecord({
-            namespace: pendingDelete.namespace,
+            id: pendingDelete.apiId,
             type: pendingDelete.type,
           }).then(() => {
             if (selected?.id === pendingDelete.id) {

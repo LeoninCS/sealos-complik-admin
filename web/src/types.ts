@@ -138,7 +138,6 @@ export type CreateBanInput = {
   reason: string;
   operatorName: string;
   banStartTime: string;
-  banEndTime?: string;
 };
 
 export type CreateUnbanInput = {
@@ -147,14 +146,14 @@ export type CreateUnbanInput = {
 };
 
 export type DeleteViolationInput = {
-  namespace: string;
+  id: number;
   type: ViolationType;
 };
 
 export type UpdateViolationStatusInput = {
   id: number;
   type: ViolationType;
-  status: "open" | "reviewing" | "closed";
+  status: "open" | "closed";
 };
 
 export type AppDataContextValue = {

@@ -57,5 +57,5 @@ type ViolationStatusResponse struct {
 }
 
 type UpdateViolationStatusRequest struct {
-	Status string `json:"status" binding:"required,oneof=open reviewing closed"`
+	Status string `json:"status" binding:"required,oneof=open closed"`
 }

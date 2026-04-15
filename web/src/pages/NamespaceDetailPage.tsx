@@ -14,7 +14,7 @@ import {
 } from "../components/ui";
 import { useAppData } from "../contexts/AppDataContext";
 import { buildCommitmentDownloadURL } from "../lib/api";
-import { formatStateLabel } from "../lib/utils";
+import { formatStateLabel, formatViolationTypeLabel } from "../lib/utils";
 import type { ViolationRecord } from "../types";
 
 function toneByBoolean(value: boolean, positiveTone: "success" | "warn" | "danger" = "success") {
@@ -198,7 +198,7 @@ export function NamespaceDetailPage() {
                 <tbody>
                   {recentViolations.map((item) => (
                     <tr key={item.id}>
-                      <td>{item.type === "complik" ? "CompliK" : "Procscan"}</td>
+                      <td>{formatViolationTypeLabel(item.type)}</td>
                       <td>
                         <button className="table-row-button" onClick={() => setSelectedViolation(item)} type="button">
                           <strong>{item.detectorName ?? item.processName ?? item.namespace}</strong>
@@ -206,7 +206,7 @@ export function NamespaceDetailPage() {
                         </button>
                       </td>
                       <td>
-                        <StatusPill tone={item.status === "open" ? "danger" : item.status === "reviewing" ? "warn" : "success"}>
+                        <StatusPill tone={item.status === "open" ? "danger" : "success"}>
                           {formatStateLabel(item.status)}
                         </StatusPill>
                       </td>
@@ -257,7 +257,7 @@ export function NamespaceDetailPage() {
         description="展示违规详情，并提供跳转到违规中心的入口。"
         onClose={() => setSelectedViolation(null)}
         open={Boolean(selectedViolation)}
-        title={selectedViolation ? `${selectedViolation.type === "complik" ? "CompliK" : "Procscan"} 违规详情` : ""}
+        title={selectedViolation ? `${formatViolationTypeLabel(selectedViolation.type)}详情` : ""}
       >
         {selectedViolation ? (
           <>
@@ -286,12 +286,12 @@ export function NamespaceDetailPage() {
       </Drawer>
 
       <ConfirmModal
-        description={pendingDelete ? `删除后将从当前前端列表中移除 ${pendingDelete.namespace} 的违规记录。` : ""}
+        description={pendingDelete ? `删除后仅移除当前这条违规记录（namespace: ${pendingDelete.namespace}）。` : ""}
         onClose={() => setPendingDelete(null)}
         onConfirm={() => {
           if (!pendingDelete) return;
           void deleteViolationRecord({
-            namespace: pendingDelete.namespace,
+            id: pendingDelete.apiId,
             type: pendingDelete.type,
           }).then(() => {
             if (selectedViolation?.id === pendingDelete.id) {

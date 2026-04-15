@@ -51,6 +51,26 @@ func (h *Handler) DeleteViolations(c *gin.Context) {
 	})
 }
 
+func (h *Handler) DeleteViolationByID(c *gin.Context) {
+	var req ViolationIDRequest
+	if err := c.ShouldBindUri(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid request path",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if err := h.service.DeleteViolationByID(c.Request.Context(), req.ID); err != nil {
+		h.respondWithServiceError(c, err, "failed to delete procscan violation")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "procscan violation deleted successfully",
+	})
+}
+
 func (h *Handler) GetViolations(c *gin.Context) {
 	namespace, ok := bindNamespace(c)
 	if !ok {

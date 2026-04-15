@@ -58,11 +58,13 @@ export function formatStateLabel(value: string) {
   switch (normalized) {
     case "open":
       return "待处理";
-    case "reviewing":
-      return "复核中";
     case "closed":
       return "已关闭";
     default:
       return value;
   }
+}
+
+export function formatViolationTypeLabel(value: "complik" | "procscan") {
+  return value === "complik" ? "内容违规" : "进程违规";
 }

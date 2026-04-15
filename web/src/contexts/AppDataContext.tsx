@@ -88,7 +88,6 @@ const AppDataContext = createContext<AppDataContextValue>(defaultValue);
 function getViolationTone(status: string): ActivityItem["tone"] {
   const normalized = status.trim().toLowerCase();
   if (normalized === "open") return "danger";
-  if (normalized === "reviewing") return "warn";
   if (normalized === "closed") return "success";
   return "info";
 }
@@ -130,7 +129,7 @@ function buildStats(violations: ViolationRecord[], bans: BanRecord[], unbans: Un
       value: String(todayViolationCount),
       delta: `${violations.length} 条累计记录`,
       tone: "info",
-      description: "包含 CompliK 和 Procscan 两类违规事件。",
+      description: "包含内容违规和进程违规两类事件。",
       targetPath: "/violations",
     },
     {
@@ -153,8 +152,8 @@ function buildLatestViolations(violations: ViolationRecord[]): ActivityItem[] {
       namespace: item.namespace,
       summary:
         item.type === "complik"
-          ? `${item.detectorName ?? "CompliK"} 发现违规，状态为 ${item.status}`
-          : `${item.processName ?? "Procscan"} 命中进程规则，状态为 ${item.status}`,
+          ? `${item.detectorName ?? "内容检测器"} 发现内容违规，状态为 ${item.status}`
+          : `${item.processName ?? "进程检测器"} 命中进程规则，状态为 ${item.status}`,
       time: item.detectedAt,
       tone: getViolationTone(item.status),
       targetPath: `/namespaces/${item.namespace}`,
@@ -229,7 +228,7 @@ function buildNamespaceProfiles(
     const timeline: Array<TimelineRecord & { sortTime: number }> = [
       ...namespaceViolations.map((item) => ({
         id: `timeline-${item.id}`,
-        title: item.type === "complik" ? "出现 CompliK 违规" : "出现 Procscan 违规",
+        title: item.type === "complik" ? "出现内容违规" : "出现进程违规",
         description: item.description,
         time: item.detectedAt,
         tone: getViolationTone(item.status),
@@ -418,8 +417,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   const deleteViolationRecord = useCallback(
-    async ({ namespace, type }: { namespace: string; type: ViolationRecord["type"] }) => {
-      await apiDeleteViolationRecord(namespace, type);
+    async ({ id, type }: { id: number; type: ViolationRecord["type"] }) => {
+      await apiDeleteViolationRecord(id, type);
       await refreshAll();
     },
     [refreshAll],
@@ -433,7 +432,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }: {
       id: number;
       type: ViolationRecord["type"];
-      status: "open" | "reviewing" | "closed";
+      status: "open" | "closed";
     }) => {
       await apiUpdateViolationStatus({ id, type, status });
       await refreshAll();

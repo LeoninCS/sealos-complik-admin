@@ -83,6 +83,18 @@ func (s *Service) DeleteViolations(ctx context.Context, namespace string) error 
 	return nil
 }
 
+func (s *Service) DeleteViolationByID(ctx context.Context, id uint64) error {
+	if id == 0 {
+		return ErrViolationInvalidInput
+	}
+
+	if err := s.repository.DeleteViolationByID(ctx, id); err != nil {
+		return translateRepositoryError(err)
+	}
+
+	return nil
+}
+
 func (s *Service) GetViolations(ctx context.Context, namespace string) ([]ViolationResponse, error) {
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err
@@ -117,7 +129,7 @@ func (s *Service) ListViolations(ctx context.Context) ([]ViolationResponse, erro
 
 func (s *Service) UpdateViolationStatus(ctx context.Context, id uint64, status string) error {
 	trimmedStatus := strings.TrimSpace(status)
-	if id == 0 || (trimmedStatus != "open" && trimmedStatus != "reviewing" && trimmedStatus != "closed") {
+	if id == 0 || (trimmedStatus != "open" && trimmedStatus != "closed") {
 		return ErrViolationInvalidInput
 	}
 
