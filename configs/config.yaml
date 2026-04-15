@@ -13,3 +13,11 @@ database:
 
 ## Logging settings
 log_dir: logs
+
+oss:
+  endpoint: oss-cn-hangzhou.aliyuncs.com
+  bucket: your-bucket-name
+  access_key_id: your-access-key-id
+  access_key_secret: your-access-key-secret
+  public_base_url: https://your-bucket-name.oss-cn-hangzhou.aliyuncs.com
+  object_prefix: commitments

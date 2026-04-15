@@ -6,7 +6,7 @@ metadata:
   labels:
     app: sealos-complik-admin
 data:
-  config.env.yaml: |
+  config.yaml: |
     port: 8080
 
     database:
@@ -38,6 +38,8 @@ spec:
           image: leonincs/sealos-complik-admin:xcq
           imagePullPolicy: IfNotPresent
           env:
+            - name: CONFIG_FILE
+              value: /config/config.yaml
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -52,7 +54,7 @@ spec:
             - containerPort: 8080
           volumeMounts:
             - name: config
-              mountPath: /app/configs
+              mountPath: /config
           readinessProbe:
             httpGet:
               path: /health
@@ -77,8 +79,8 @@ spec:
           configMap:
             name: sealos-complik-admin-config
             items:
-              - key: config.env.yaml
-                path: config.env.yaml
+              - key: config.yaml
+                path: config.yaml
 
 ---
 apiVersion: v1

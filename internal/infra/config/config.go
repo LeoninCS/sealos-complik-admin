@@ -15,6 +15,7 @@ const (
 	defaultDBUsername = "root"
 	defaultDBName     = "sealos-complik-admin"
 	defaultDBPassword = "123456"
+	defaultOSSPrefix  = "commitments"
 )
 
 type DatabaseConfig struct {
@@ -25,10 +26,20 @@ type DatabaseConfig struct {
 	Name     string `yaml:"name"`
 }
 
+type OSSConfig struct {
+	Endpoint        string `yaml:"endpoint"`
+	Bucket          string `yaml:"bucket"`
+	AccessKeyID     string `yaml:"access_key_id"`
+	AccessKeySecret string `yaml:"access_key_secret"`
+	PublicBaseURL   string `yaml:"public_base_url"`
+	ObjectPrefix    string `yaml:"object_prefix"`
+}
+
 type Config struct {
 	Port     int            `yaml:"port"`
 	LogDir   string         `yaml:"log_dir"`
 	Database DatabaseConfig `yaml:"database"`
+	OSS      OSSConfig      `yaml:"oss"`
 }
 
 // LoadConfig loads the configuration from the specified YAML file and environment variables.
@@ -43,6 +54,9 @@ func LoadConfig(configFile string) *Config {
 			Username: defaultDBUsername,
 			Password: defaultDBPassword, // Get DB password from environment variable
 			Name:     defaultDBName,
+		},
+		OSS: OSSConfig{
+			ObjectPrefix: defaultOSSPrefix,
 		},
 	}
 	// Load base config from file

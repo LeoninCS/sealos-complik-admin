@@ -2,7 +2,11 @@ package commitment
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +17,49 @@ type Handler struct {
 
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
+}
+
+// CreateOrUploadCommitment routes POST /api/commitments based on content type.
+func (h *Handler) CreateOrUploadCommitment(c *gin.Context) {
+	contentType := strings.ToLower(c.GetHeader("Content-Type"))
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		h.UploadCommitment(c)
+		return
+	}
+
+	h.CreateCommitment(c)
+}
+
+// UploadCommitment handles uploading a commitment PDF and saving its metadata.
+func (h *Handler) UploadCommitment(c *gin.Context) {
+	var req UploadCommitmentRequest
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid form data",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "missing pdf file",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	resp, err := h.service.UploadCommitment(c.Request.Context(), req.Namespace, fileHeader)
+	if err != nil {
+		h.respondWithServiceError(c, err, "failed to upload commitment")
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "commitment uploaded successfully",
+		"data":    resp,
+	})
 }
 
 // CreateCommitment handles the creation of a new commitment.
@@ -106,6 +153,28 @@ func (h *Handler) ListCommitments(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// DownloadCommitment downloads commitment file by namespace with attachment header.
+func (h *Handler) DownloadCommitment(c *gin.Context) {
+	namespace, ok := bindCommitmentNamespace(c)
+	if !ok {
+		return
+	}
+
+	file, err := h.service.DownloadCommitment(c.Request.Context(), namespace)
+	if err != nil {
+		h.respondWithServiceError(c, err, "failed to download commitment")
+		return
+	}
+	defer file.Reader.Close()
+
+	c.Header("Content-Type", file.ContentType)
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", url.QueryEscape(file.FileName)))
+	c.Status(http.StatusOK)
+	if _, err := io.Copy(c.Writer, file.Reader); err != nil {
+		_ = c.Error(err)
+	}
+}
+
 // bindCommitmentNamespace extracts the namespace from the URI and validates it.
 func bindCommitmentNamespace(c *gin.Context) (string, bool) {
 	var req CommitmentNamespaceRequest
@@ -125,6 +194,14 @@ func (h *Handler) respondWithServiceError(c *gin.Context, err error, fallbackMes
 	switch {
 	case errors.Is(err, ErrCommitmentInvalidInput):
 		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+	case errors.Is(err, ErrCommitmentInvalidFile):
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
+	case errors.Is(err, ErrCommitmentUploadDisabled):
+		c.JSON(http.StatusServiceUnavailable, gin.H{
 			"message": err.Error(),
 		})
 	case errors.Is(err, ErrCommitmentAlreadyExists):

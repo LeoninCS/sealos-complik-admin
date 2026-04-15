@@ -53,7 +53,10 @@ func main() {
 	}
 
 	// Initialize router
-	srv := router.InitRouter()
+	srv, err := router.InitRouter(cfg)
+	if err != nil {
+		appLogger.Fatalf("initialize router: %v", err)
+	}
 	addr := fmt.Sprintf(":%d", cfg.Port)
 
 	// Start server

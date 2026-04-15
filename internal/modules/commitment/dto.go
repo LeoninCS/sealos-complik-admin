@@ -12,6 +12,10 @@ type CreateCommitmentRequest struct {
 	FileURL   string `json:"file_url" binding:"required,max=512"`
 }
 
+type UploadCommitmentRequest struct {
+	Namespace string `form:"namespace" binding:"required,max=255"`
+}
+
 type UpdateCommitmentRequest struct {
 	FileName string `json:"file_name" binding:"required,max=255"`
 	FileURL  string `json:"file_url" binding:"required,max=512"`

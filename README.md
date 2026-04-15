@@ -69,7 +69,7 @@ COLLATE utf8mb4_unicode_ci;
 
 ### Configuration
 
-The application reads `configs/config.env.yaml` by default.
+The application reads `configs/config.yaml` by default.
 
 ```yaml
 port: 8080
@@ -89,10 +89,12 @@ Notes:
 - Tables are auto-migrated at startup.
 - The application does not create the MySQL database itself.
 - Logs are written to the directory configured by `log_dir`.
+- `oss.endpoint` now uses an S3-compatible endpoint (such as MinIO), for example `http://minio.objectstorage-system.svc.cluster.local`.
+- `oss.public_base_url` should be a URL reachable by the browser if you want frontend users to open uploaded files directly.
 
 ### Run Locally
 
-1. Update `configs/config.env.yaml` for your environment.
+1. Update `configs/config.yaml` for your environment.
 2. Make sure MySQL is running and the target database already exists.
 3. Start the service with one of the following commands:
 
@@ -120,7 +122,7 @@ Run the container:
 docker run --rm -p 8080:8080 sealos-complik-admin
 ```
 
-If MySQL is not running inside the same network as the container, update `configs/config.env.yaml` with a reachable database host before building or running the image.
+If MySQL is not running inside the same network as the container, update `configs/config.yaml` with a reachable database host before building or running the image.
 
 ### API Overview
 
@@ -258,7 +260,7 @@ COLLATE utf8mb4_unicode_ci;
 
 ### 配置说明
 
-应用默认读取 `configs/config.env.yaml`。
+应用默认读取 `configs/config.yaml`。
 
 ```yaml
 port: 8080
@@ -281,7 +283,7 @@ log_dir: logs
 
 ### 本地运行
 
-1. 根据你的环境修改 `configs/config.env.yaml`。
+1. 根据你的环境修改 `configs/config.yaml`。
 2. 确认 MySQL 已启动，且目标数据库已经存在。
 3. 使用以下任一命令启动服务：
 
@@ -309,7 +311,7 @@ docker build -t sealos-complik-admin .
 docker run --rm -p 8080:8080 sealos-complik-admin
 ```
 
-如果 MySQL 不在容器同一网络内，请在构建或运行前先把 `configs/config.env.yaml` 中的数据库地址改成容器可访问的地址。
+如果 MySQL 不在容器同一网络内，请在构建或运行前先把 `configs/config.yaml` 中的数据库地址改成容器可访问的地址。
 
 ### 接口概览
 
