@@ -12,11 +12,11 @@ import type {
 
 export const stats: StatCardItem[] = [
   {
-    label: "待处理违规 namespace 数",
+    label: "违规 namespace 数",
     value: "24",
-    delta: "+6",
+    delta: "24 条违规记录",
     tone: "danger",
-    description: "比昨天新增 6 个高风险 namespace",
+    description: "按当前违规记录对应的 namespace 去重统计",
     targetPath: "/violations",
   },
   {
@@ -49,7 +49,7 @@ export const latestViolations: ActivityItem[] = [
   {
     id: "lv-1",
     namespace: "prod-finance",
-    summary: "CompliK 发现敏感关键字命中，状态为 open",
+    summary: "CompliK 发现敏感关键字命中",
     time: "2026-04-06 19:42",
     tone: "danger",
     targetPath: "/namespaces/prod-finance",
@@ -198,7 +198,7 @@ export const namespaceProfiles: NamespaceProfile[] = [
       {
         id: "t2",
         title: "出现新违规事件",
-        description: "CompliK 关键字规则命中，状态 open。",
+        description: "CompliK 关键字规则命中。",
         time: "2026-04-06 19:42",
         tone: "danger",
       },
@@ -296,7 +296,8 @@ export const banRecords: BanRecord[] = [
   {
     id: "ban-1",
     namespace: "prod-finance",
-    reason: "敏感关键字命中，需要临时封禁复核",
+    reason: "## 封禁说明\n- 敏感关键字命中\n- 需要临时封禁复核",
+    screenshotUrls: ["https://files.example.com/prod-finance-ban-1.png"],
     operatorName: "Alice",
     banStartTime: "2026-04-06 19:55",
     banEndTime: "2026-04-07 19:55",
@@ -308,6 +309,7 @@ export const banRecords: BanRecord[] = [
     id: "ban-2",
     namespace: "ops-tools",
     reason: "进程规则命中，待确认授权范围",
+    screenshotUrls: [],
     operatorName: "Bob",
     banStartTime: "2026-04-05 09:10",
     banEndTime: "2026-04-05 18:10",

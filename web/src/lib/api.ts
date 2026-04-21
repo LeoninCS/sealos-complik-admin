@@ -9,7 +9,6 @@ import type {
   UpdateConfigInput,
   CreateUnbanInput,
   UnbanRecord,
-  UpdateViolationStatusInput,
   ViolationRecord,
 } from "../types";
 
@@ -38,6 +37,7 @@ type CommitmentDto = {
 type BanDto = {
   namespace: string;
   reason?: string;
+  screenshot_urls?: string[];
   ban_start_time: string;
   ban_end_time?: string | null;
   operator_name: string;
@@ -156,6 +156,7 @@ function toBanRecord(item: BanDto): BanRecord {
     id: `${item.namespace}-${item.ban_start_time}`,
     namespace: item.namespace,
     reason: item.reason ?? "",
+    screenshotUrls: item.screenshot_urls ?? [],
     operatorName: item.operator_name,
     banStartTime: formatDateTime(item.ban_start_time),
     banEndTime: item.ban_end_time ? formatDateTime(item.ban_end_time) : undefined,
@@ -299,21 +300,65 @@ export function buildCommitmentDownloadURL(namespace: string) {
   return `/api/commitments/${encodeURIComponent(namespace)}/download`;
 }
 
+export function buildBanScreenshotPreviewURL(fileURL: string) {
+  return `/api/bans/screenshots?url=${encodeURIComponent(fileURL)}`;
+}
+
 export async function listBanRecords() {
   const data = await request<BanDto[]>("/api/bans");
   return data.map(toBanRecord);
 }
 
 export async function createBanRecord(input: CreateBanInput) {
-  await request("/api/bans", {
-    method: "POST",
-    body: JSON.stringify({
-      namespace: input.namespace,
-      reason: input.reason,
-      operator_name: input.operatorName,
-      ban_start_time: new Date(input.banStartTime).toISOString(),
-    }),
+  const screenshots = input.screenshots ?? [];
+  if (screenshots.length === 0) {
+    await request("/api/bans", {
+      method: "POST",
+      body: JSON.stringify({
+        namespace: input.namespace,
+        reason: input.reason,
+        operator_name: input.operatorName,
+        ban_start_time: new Date(input.banStartTime).toISOString(),
+      }),
+    });
+    return;
+  }
+
+  const formData = new FormData();
+  formData.set("namespace", input.namespace);
+  formData.set("reason", input.reason);
+  formData.set("operator_name", input.operatorName);
+  formData.set("ban_start_time", new Date(input.banStartTime).toISOString());
+  screenshots.forEach((file) => {
+    formData.append("screenshots", file);
   });
+
+  try {
+    await request("/api/bans/upload", {
+      method: "POST",
+      body: formData,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("404")) {
+      try {
+        await request("/api/bans", {
+          method: "POST",
+          body: formData,
+        });
+        return;
+      } catch (legacyError) {
+        if (
+          legacyError instanceof Error &&
+          (legacyError.message.includes("invalid request body") || legacyError.message.includes("invalid form data"))
+        ) {
+          throw new Error("后端版本较旧，升级后端服务后即可上传封禁截图。");
+        }
+        throw legacyError;
+      }
+    }
+
+    throw error;
+  }
 }
 
 export async function deleteBanRecord(namespace: string) {
@@ -353,16 +398,6 @@ export async function listViolationRecords() {
     ...complikData.map(toComplikViolationRecord),
     ...procscanData.map(toProcscanViolationRecord),
   ].sort((a, b) => toTimestamp(b.detectedAt) - toTimestamp(a.detectedAt));
-}
-
-export async function updateViolationStatus(input: UpdateViolationStatusInput) {
-  const path = input.type === "complik" ? "/api/complik-violations" : "/api/procscan-violations";
-  await request(`${path}/${input.id}/status`, {
-    method: "PUT",
-    body: JSON.stringify({
-      status: input.status,
-    }),
-  });
 }
 
 export async function deleteViolationRecord(id: number, type: ViolationRecord["type"]) {

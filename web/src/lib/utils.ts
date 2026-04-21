@@ -52,19 +52,25 @@ export function toTimestamp(value: string | number | Date | null | undefined) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-export function formatStateLabel(value: string) {
-  const normalized = value.trim().toLowerCase();
-
-  switch (normalized) {
-    case "open":
-      return "待处理";
-    case "closed":
-      return "已关闭";
-    default:
-      return value;
-  }
-}
-
 export function formatViolationTypeLabel(value: "complik" | "procscan") {
   return value === "complik" ? "内容违规" : "进程违规";
+}
+
+export function summarizeMarkdown(value: string, maxLength = 80) {
+  const collapsed = value
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1 ")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1 ")
+    .replace(/[`>#*_~-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!collapsed) {
+    return "";
+  }
+
+  if (collapsed.length <= maxLength) {
+    return collapsed;
+  }
+
+  return `${collapsed.slice(0, maxLength).trim()}...`;
 }

@@ -14,23 +14,38 @@ import {
   SurfaceCard,
 } from "../components/ui";
 import { useAppData } from "../contexts/AppDataContext";
+import { useManagedOperatorOptions } from "../hooks/useOperatorOptions";
 import type { UnbanRecord } from "../types";
 
 export function UnbansPage() {
   const navigate = useNavigate();
-  const { createUnbanRecord, unbanRecords, deleteUnbanRecord } = useAppData();
+  const { banRecords, configRecords, createUnbanRecord, unbanRecords, deleteUnbanRecord } = useAppData();
   const [selected, setSelected] = useState<UnbanRecord | null>(null);
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
+  const [operatorFilter, setOperatorFilter] = useState("");
   const [pendingDelete, setPendingDelete] = useState<UnbanRecord | null>(null);
   const [namespace, setNamespace] = useState("");
   const [operatorName, setOperatorName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const { operatorConfigType, operatorOptions, operatorSource } = useManagedOperatorOptions(configRecords, [
+    ...banRecords.map((item) => item.operatorName),
+    ...unbanRecords.map((item) => item.operatorName),
+  ]);
+
   const rows = useMemo(() => {
-    return unbanRecords.filter((item) => item.namespace.toLowerCase().includes(keyword.toLowerCase()));
-  }, [keyword, unbanRecords]);
+    return unbanRecords.filter((item) => {
+      if (!item.namespace.toLowerCase().includes(keyword.toLowerCase())) {
+        return false;
+      }
+      if (operatorFilter && item.operatorName !== operatorFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [keyword, operatorFilter, unbanRecords]);
 
   const handleCreateUnban = async () => {
     if (!namespace.trim() || !operatorName.trim()) {
@@ -70,7 +85,14 @@ export function UnbansPage() {
             <Input placeholder="按 namespace 搜索" value={keyword} onChange={(event) => setKeyword(event.target.value)} />
           </Field>
           <Field label="操作人">
-            <Input placeholder="例如：Bob" />
+            <Select value={operatorFilter} onChange={(event) => setOperatorFilter(event.target.value)}>
+              <option value="">全部操作人</option>
+              {operatorOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
           </Field>
           <Field label="时间范围">
             <Select defaultValue="7d">
@@ -168,8 +190,20 @@ export function UnbansPage() {
             <Input placeholder="例如：growth-ops" value={namespace} onChange={(event) => setNamespace(event.target.value)} />
           </Field>
           <Field label="操作人">
-            <Input placeholder="例如：Bob" value={operatorName} onChange={(event) => setOperatorName(event.target.value)} />
+            <Select value={operatorName} onChange={(event) => setOperatorName(event.target.value)}>
+              <option value="">请选择操作人</option>
+              {operatorOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
           </Field>
+          <div className="muted-text">
+            {operatorSource === "config"
+              ? `操作人名单来自配置类型 ${operatorConfigType}。`
+              : `当前操作人名单来自历史记录。建议创建 config_type 为 ${operatorConfigType} 的配置，JSON 内容使用 {"operators":["张三","李四"]}。`}
+          </div>
           {formError ? <div className="muted-text" style={{ color: "#b42318" }}>{formError}</div> : null}
           <div className="button-row">
             <Button variant="primary" onClick={() => void handleCreateUnban()}>

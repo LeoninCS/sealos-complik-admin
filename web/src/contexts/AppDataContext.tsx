@@ -16,9 +16,8 @@ import {
   listUnbanRecords,
   listViolationRecords,
   updateConfigRecord as apiUpdateConfigRecord,
-  updateViolationStatus as apiUpdateViolationStatus,
 } from "../lib/api";
-import { toTimestamp } from "../lib/utils";
+import { summarizeMarkdown, toTimestamp } from "../lib/utils";
 import type {
   ActivityItem,
   AppDataContextValue,
@@ -80,22 +79,29 @@ const defaultValue: AppDataContextValue = {
   deleteBanRecord: async () => undefined,
   deleteUnbanRecord: async () => undefined,
   deleteViolationRecord: async () => undefined,
-  updateViolationStatus: async () => undefined,
 };
 
 const AppDataContext = createContext<AppDataContextValue>(defaultValue);
 
-function getViolationTone(status: string): ActivityItem["tone"] {
-  const normalized = status.trim().toLowerCase();
-  if (normalized === "open") return "danger";
-  if (normalized === "closed") return "success";
-  return "info";
+function getViolationTone(type: ViolationRecord["type"]): ActivityItem["tone"] {
+  return type === "complik" ? "danger" : "warn";
+}
+
+function describeBanRecord(item: BanRecord) {
+  const details = [`操作人 ${item.operatorName}`];
+  const reasonSummary = summarizeMarkdown(item.reason, 48);
+  if (reasonSummary) {
+    details.push(`描述 ${reasonSummary}`);
+  }
+  if (item.screenshotUrls.length > 0) {
+    details.push(`截图 ${item.screenshotUrls.length} 张`);
+  }
+
+  return details.join("，");
 }
 
 function buildStats(violations: ViolationRecord[], bans: BanRecord[], unbans: UnbanRecord[]): StatCardItem[] {
-  const openNamespaces = new Set(
-    violations.filter((item) => item.status.trim().toLowerCase() !== "closed").map((item) => item.namespace),
-  );
+  const violationNamespaces = new Set(violations.map((item) => item.namespace));
   const now = Date.now();
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -109,11 +115,11 @@ function buildStats(violations: ViolationRecord[], bans: BanRecord[], unbans: Un
 
   return [
     {
-      label: "待处理违规 namespace 数",
-      value: String(openNamespaces.size),
-      delta: `${violations.filter((item) => item.status.trim().toLowerCase() === "open").length} 条待处理`,
+      label: "违规 namespace 数",
+      value: String(violationNamespaces.size),
+      delta: `${violations.length} 条违规记录`,
       tone: "danger",
-      description: "按当前未关闭违规对应的 namespace 去重统计。",
+      description: "按当前违规记录对应的 namespace 去重统计。",
       targetPath: "/violations",
     },
     {
@@ -152,10 +158,10 @@ function buildLatestViolations(violations: ViolationRecord[]): ActivityItem[] {
       namespace: item.namespace,
       summary:
         item.type === "complik"
-          ? `${item.detectorName ?? "内容检测器"} 发现内容违规，状态为 ${item.status}`
-          : `${item.processName ?? "进程检测器"} 命中进程规则，状态为 ${item.status}`,
+          ? `${item.detectorName ?? "内容检测器"} 发现内容违规记录`
+          : `${item.processName ?? "进程检测器"} 命中进程规则`,
       time: item.detectedAt,
-      tone: getViolationTone(item.status),
+      tone: getViolationTone(item.type),
       targetPath: `/namespaces/${item.namespace}`,
     }));
 }
@@ -169,7 +175,7 @@ function buildLatestActions(
     ...bans.map((item) => ({
       id: item.id,
       namespace: item.namespace,
-      summary: `新增封禁记录，操作人 ${item.operatorName}${item.reason ? `，原因 ${item.reason}` : ""}`,
+      summary: `新增封禁记录，${describeBanRecord(item)}`,
       time: item.createdAt,
       tone: "warn" as const,
       targetPath: "/bans",
@@ -229,15 +235,15 @@ function buildNamespaceProfiles(
       ...namespaceViolations.map((item) => ({
         id: `timeline-${item.id}`,
         title: item.type === "complik" ? "出现内容违规" : "出现进程违规",
-        description: item.description,
+        description: summarizeMarkdown(item.description, 72) || "暂无描述",
         time: item.detectedAt,
-        tone: getViolationTone(item.status),
+        tone: getViolationTone(item.type),
         sortTime: toTimestamp(item.detectedAt),
       })),
       ...namespaceBans.map((item) => ({
         id: `timeline-ban-${item.id}`,
         title: "新增封禁记录",
-        description: item.reason ? `操作人 ${item.operatorName}，原因 ${item.reason}` : `操作人 ${item.operatorName}`,
+        description: describeBanRecord(item),
         time: item.createdAt,
         tone: "warn" as const,
         sortTime: toTimestamp(item.createdAt),
@@ -268,7 +274,7 @@ function buildNamespaceProfiles(
 
     return {
       namespace,
-      violated: namespaceViolations.some((item) => item.status.trim().toLowerCase() !== "closed"),
+      violated: namespaceViolations.length > 0,
       banned: namespaceBans.some((item) => item.active),
       commitmentUploaded: Boolean(namespaceCommitment),
       lastActionAt,
@@ -424,22 +430,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     [refreshAll],
   );
 
-  const updateViolationStatus = useCallback(
-    async ({
-      id,
-      type,
-      status,
-    }: {
-      id: number;
-      type: ViolationRecord["type"];
-      status: "open" | "closed";
-    }) => {
-      await apiUpdateViolationStatus({ id, type, status });
-      await refreshAll();
-    },
-    [refreshAll],
-  );
-
   const value = useMemo<AppDataContextValue>(
     () => ({
       isLoading,
@@ -465,7 +455,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       deleteBanRecord,
       deleteUnbanRecord,
       deleteViolationRecord,
-      updateViolationStatus,
     }),
     [
       banRecords,
@@ -481,7 +470,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       deleteConfigRecord,
       deleteUnbanRecord,
       deleteViolationRecord,
-      updateViolationStatus,
       error,
       isLoading,
       latestActions,

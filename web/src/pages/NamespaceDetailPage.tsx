@@ -12,9 +12,10 @@ import {
   StatusPill,
   SurfaceCard,
 } from "../components/ui";
+import { MarkdownRenderer } from "../components/MarkdownRenderer";
 import { useAppData } from "../contexts/AppDataContext";
 import { buildCommitmentDownloadURL } from "../lib/api";
-import { formatStateLabel, formatViolationTypeLabel } from "../lib/utils";
+import { formatViolationTypeLabel, summarizeMarkdown } from "../lib/utils";
 import type { ViolationRecord } from "../types";
 
 function toneByBoolean(value: boolean, positiveTone: "success" | "warn" | "danger" = "success") {
@@ -44,7 +45,7 @@ export function NamespaceDetailPage() {
         <PageHeader
           kicker="Namespace"
           title={namespace ?? "命名空间详情"}
-          description="先判断违规、封禁和承诺书状态，再回看最近违规和处置时间线。"
+          description="先判断违规记录、封禁和承诺书情况，再回看最近违规和处置时间线。"
           actions={
             <Button
               variant="secondary"
@@ -71,7 +72,7 @@ export function NamespaceDetailPage() {
       <PageHeader
         kicker="Namespace"
         title={profile.namespace}
-        description="先判断违规、封禁和承诺书状态，再回看最近违规和处置时间线。"
+        description="先判断违规记录、封禁和承诺书情况，再回看最近违规和处置时间线。"
         actions={
           <>
             <Button variant="secondary" onClick={() => navigate(`/bans?namespace=${profile.namespace}`)}>
@@ -92,7 +93,7 @@ export function NamespaceDetailPage() {
             </h2>
             <div className="button-row">
               <StatusPill tone={profile.violated ? "danger" : "success"}>
-                {profile.violated ? "存在未处理违规" : "当前无违规"}
+                {profile.violated ? "存在违规记录" : "当前无违规记录"}
               </StatusPill>
               <StatusPill tone={profile.banned ? "warn" : "success"}>
                 {profile.banned ? "当前已封禁" : "当前未封禁"}
@@ -118,10 +119,10 @@ export function NamespaceDetailPage() {
 
       <section className="info-grid">
         <SurfaceCard className="info-card">
-          <div className="info-card-title">是否违规</div>
-          <div className="info-card-value">{profile.violated ? "存在未处理违规" : "当前无违规"}</div>
+          <div className="info-card-title">违规记录</div>
+          <div className="info-card-value">{profile.violated ? "存在违规记录" : "当前无违规记录"}</div>
           <StatusPill tone={toneByBoolean(profile.violated, "danger")}>
-            {profile.violated ? "需要跟进" : "状态正常"}
+            {profile.violated ? "需关注" : "记录为空"}
           </StatusPill>
         </SurfaceCard>
         <SurfaceCard className="info-card">
@@ -190,7 +191,6 @@ export function NamespaceDetailPage() {
                   <tr>
                     <th>类型</th>
                     <th>关键信息</th>
-                    <th>状态</th>
                     <th>发现时间</th>
                     <th>操作</th>
                   </tr>
@@ -202,13 +202,8 @@ export function NamespaceDetailPage() {
                       <td>
                         <button className="table-row-button" onClick={() => setSelectedViolation(item)} type="button">
                           <strong>{item.detectorName ?? item.processName ?? item.namespace}</strong>
-                          <div className="muted-text">{item.description}</div>
+                          <div className="muted-text">{summarizeMarkdown(item.description, 72) || "暂无描述"}</div>
                         </button>
-                      </td>
-                      <td>
-                        <StatusPill tone={item.status === "open" ? "danger" : "success"}>
-                          {formatStateLabel(item.status)}
-                        </StatusPill>
                       </td>
                       <td>{item.detectedAt}</td>
                       <td>
@@ -264,15 +259,19 @@ export function NamespaceDetailPage() {
             <DetailList
               items={[
                 { label: "namespace", value: selectedViolation.namespace },
-                { label: "状态", value: formatStateLabel(selectedViolation.status) },
                 { label: "发现时间", value: selectedViolation.detectedAt },
-                { label: "描述", value: selectedViolation.description },
                 { label: "detector / process", value: selectedViolation.detectorName ?? selectedViolation.processName ?? "-" },
                 { label: "资源 / pod", value: selectedViolation.resourceName ?? selectedViolation.podName ?? "-" },
                 { label: "host / node", value: selectedViolation.host ?? selectedViolation.nodeName ?? "-" },
                 { label: "URL / message", value: selectedViolation.url ?? selectedViolation.message ?? "-" },
               ]}
             />
+            <div className="ban-detail-section">
+              <div className="detail-label">描述</div>
+              <div className="detail-value">
+                <MarkdownRenderer content={selectedViolation.description} />
+              </div>
+            </div>
             <div className="button-row" style={{ marginTop: 20 }}>
               <Button variant="secondary" onClick={() => navigate("/violations")}>
                 去违规中心

@@ -103,6 +103,7 @@ export type BanRecord = {
   id: string;
   namespace: string;
   reason: string;
+  screenshotUrls: string[];
   operatorName: string;
   banStartTime: string;
   banEndTime?: string;
@@ -138,6 +139,7 @@ export type CreateBanInput = {
   reason: string;
   operatorName: string;
   banStartTime: string;
+  screenshots: File[];
 };
 
 export type CreateUnbanInput = {
@@ -148,12 +150,6 @@ export type CreateUnbanInput = {
 export type DeleteViolationInput = {
   id: number;
   type: ViolationType;
-};
-
-export type UpdateViolationStatusInput = {
-  id: number;
-  type: ViolationType;
-  status: "open" | "closed";
 };
 
 export type AppDataContextValue = {
@@ -180,5 +176,4 @@ export type AppDataContextValue = {
   deleteBanRecord: (namespace: string) => Promise<void>;
   deleteUnbanRecord: (namespace: string) => Promise<void>;
   deleteViolationRecord: (input: DeleteViolationInput) => Promise<void>;
-  updateViolationStatus: (input: UpdateViolationStatusInput) => Promise<void>;
 };
