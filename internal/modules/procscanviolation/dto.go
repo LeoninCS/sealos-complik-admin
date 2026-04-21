@@ -24,6 +24,7 @@ type CreateViolationRequest struct {
 	MatchType         string          `json:"match_type" binding:"omitempty,max=32"`
 	MatchRule         string          `json:"match_rule" binding:"omitempty,max=255"`
 	Message           string          `json:"message" binding:"required"`
+	IsIllegal         *bool           `json:"is_illegal"`
 	LabelActionStatus string          `json:"label_action_status" binding:"omitempty,max=32"`
 	LabelActionResult string          `json:"label_action_result" binding:"omitempty"`
 	Status            string          `json:"status" binding:"omitempty,max=32"`
@@ -43,6 +44,7 @@ type ViolationResponse struct {
 	MatchType         string          `json:"match_type,omitempty"`
 	MatchRule         string          `json:"match_rule,omitempty"`
 	Message           string          `json:"message"`
+	IsIllegal         bool            `json:"is_illegal"`
 	LabelActionStatus string          `json:"label_action_status,omitempty"`
 	LabelActionResult string          `json:"label_action_result,omitempty"`
 	Status            string          `json:"status"`

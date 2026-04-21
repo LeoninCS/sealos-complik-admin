@@ -18,10 +18,14 @@ func (r *Repository) CreateViolation(ctx context.Context, violation *ProcscanVio
 	return r.db.WithContext(ctx).Create(violation).Error
 }
 
-func (r *Repository) GetViolationsByNamespace(ctx context.Context, namespace string) ([]ProcscanViolationEvent, error) {
+func (r *Repository) GetViolationsByNamespace(ctx context.Context, namespace string, includeAll bool) ([]ProcscanViolationEvent, error) {
 	var violations []ProcscanViolationEvent
-	if err := r.db.WithContext(ctx).
-		Where("namespace = ?", namespace).
+	query := r.db.WithContext(ctx).Where("namespace = ?", namespace)
+	if !includeAll {
+		query = query.Where("is_illegal = ?", true)
+	}
+
+	if err := query.
 		Order("detected_at DESC, id DESC").
 		Find(&violations).Error; err != nil {
 		return nil, err
@@ -33,9 +37,14 @@ func (r *Repository) GetViolationsByNamespace(ctx context.Context, namespace str
 	return violations, nil
 }
 
-func (r *Repository) ListViolations(ctx context.Context) ([]ProcscanViolationEvent, error) {
+func (r *Repository) ListViolations(ctx context.Context, includeAll bool) ([]ProcscanViolationEvent, error) {
 	var violations []ProcscanViolationEvent
-	if err := r.db.WithContext(ctx).Order("detected_at DESC, id DESC").Find(&violations).Error; err != nil {
+	query := r.db.WithContext(ctx)
+	if !includeAll {
+		query = query.Where("is_illegal = ?", true)
+	}
+
+	if err := query.Order("detected_at DESC, id DESC").Find(&violations).Error; err != nil {
 		return nil, err
 	}
 
@@ -86,6 +95,7 @@ func (r *Repository) HasViolations(ctx context.Context, namespace string) (bool,
 	if err := r.db.WithContext(ctx).
 		Model(&ProcscanViolationEvent{}).
 		Where("namespace = ?", namespace).
+		Where("is_illegal = ?", true).
 		Count(&count).Error; err != nil {
 		return false, err
 	}

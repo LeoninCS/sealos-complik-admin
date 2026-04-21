@@ -95,12 +95,12 @@ func (s *Service) DeleteViolationByID(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (s *Service) GetViolations(ctx context.Context, namespace string) ([]ViolationResponse, error) {
+func (s *Service) GetViolations(ctx context.Context, namespace string, includeAll bool) ([]ViolationResponse, error) {
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
 
-	violations, err := s.repository.GetViolationsByNamespace(ctx, namespace)
+	violations, err := s.repository.GetViolationsByNamespace(ctx, namespace, includeAll)
 	if err != nil {
 		return nil, translateRepositoryError(err)
 	}
@@ -113,8 +113,8 @@ func (s *Service) GetViolations(ctx context.Context, namespace string) ([]Violat
 	return responses, nil
 }
 
-func (s *Service) ListViolations(ctx context.Context) ([]ViolationResponse, error) {
-	violations, err := s.repository.ListViolations(ctx)
+func (s *Service) ListViolations(ctx context.Context, includeAll bool) ([]ViolationResponse, error) {
+	violations, err := s.repository.ListViolations(ctx, includeAll)
 	if err != nil {
 		return nil, err
 	}

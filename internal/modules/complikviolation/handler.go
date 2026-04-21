@@ -3,6 +3,8 @@ package complikviolation
 import (
 	"errors"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -77,7 +79,12 @@ func (h *Handler) GetViolations(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.GetViolations(c.Request.Context(), namespace)
+	includeAll, ok := bindIncludeAllQuery(c)
+	if !ok {
+		return
+	}
+
+	resp, err := h.service.GetViolations(c.Request.Context(), namespace, includeAll)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to get complik violations")
 		return
@@ -87,7 +94,12 @@ func (h *Handler) GetViolations(c *gin.Context) {
 }
 
 func (h *Handler) ListViolations(c *gin.Context) {
-	resp, err := h.service.ListViolations(c.Request.Context())
+	includeAll, ok := bindIncludeAllQuery(c)
+	if !ok {
+		return
+	}
+
+	resp, err := h.service.ListViolations(c.Request.Context(), includeAll)
 	if err != nil {
 		h.respondWithServiceError(c, err, "failed to list complik violations")
 		return
@@ -151,6 +163,24 @@ func bindNamespace(c *gin.Context) (string, bool) {
 	}
 
 	return req.Namespace, true
+}
+
+func bindIncludeAllQuery(c *gin.Context) (bool, bool) {
+	raw := strings.TrimSpace(c.Query("include_all"))
+	if raw == "" {
+		return false, true
+	}
+
+	includeAll, err := strconv.ParseBool(raw)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid include_all query",
+			"error":   err.Error(),
+		})
+		return false, false
+	}
+
+	return includeAll, true
 }
 
 func (h *Handler) respondWithServiceError(c *gin.Context, err error, fallbackMessage string) {

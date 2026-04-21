@@ -47,6 +47,7 @@ func (s *Service) CreateViolation(ctx context.Context, req CreateViolationReques
 		MatchType:         input.MatchType,
 		MatchRule:         input.MatchRule,
 		Message:           input.Message,
+		IsIllegal:         input.IsIllegal,
 		LabelActionStatus: input.LabelActionStatus,
 		LabelActionResult: input.LabelActionResult,
 		Status:            input.Status,
@@ -85,12 +86,12 @@ func (s *Service) DeleteViolationByID(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (s *Service) GetViolations(ctx context.Context, namespace string) ([]ViolationResponse, error) {
+func (s *Service) GetViolations(ctx context.Context, namespace string, includeAll bool) ([]ViolationResponse, error) {
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err
 	}
 
-	violations, err := s.repository.GetViolationsByNamespace(ctx, namespace)
+	violations, err := s.repository.GetViolationsByNamespace(ctx, namespace, includeAll)
 	if err != nil {
 		return nil, translateRepositoryError(err)
 	}
@@ -103,8 +104,8 @@ func (s *Service) GetViolations(ctx context.Context, namespace string) ([]Violat
 	return responses, nil
 }
 
-func (s *Service) ListViolations(ctx context.Context) ([]ViolationResponse, error) {
-	violations, err := s.repository.ListViolations(ctx)
+func (s *Service) ListViolations(ctx context.Context, includeAll bool) ([]ViolationResponse, error) {
+	violations, err := s.repository.ListViolations(ctx, includeAll)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +155,7 @@ type normalizedViolationInput struct {
 	MatchType         string
 	MatchRule         string
 	Message           string
+	IsIllegal         bool
 	LabelActionStatus string
 	LabelActionResult string
 	Status            string
@@ -175,6 +177,11 @@ func normalizeViolationInput(req CreateViolationRequest) (*normalizedViolationIn
 		trimmedStatus = defaultStatus
 	}
 
+	isIllegal := true
+	if req.IsIllegal != nil {
+		isIllegal = *req.IsIllegal
+	}
+
 	return &normalizedViolationInput{
 		Namespace:         trimmedNamespace,
 		PodName:           strings.TrimSpace(req.PodName),
@@ -186,6 +193,7 @@ func normalizeViolationInput(req CreateViolationRequest) (*normalizedViolationIn
 		MatchType:         strings.TrimSpace(req.MatchType),
 		MatchRule:         strings.TrimSpace(req.MatchRule),
 		Message:           trimmedMessage,
+		IsIllegal:         isIllegal,
 		LabelActionStatus: strings.TrimSpace(req.LabelActionStatus),
 		LabelActionResult: strings.TrimSpace(req.LabelActionResult),
 		Status:            trimmedStatus,
@@ -246,6 +254,7 @@ func toViolationResponse(violation *ProcscanViolationEvent) *ViolationResponse {
 		MatchType:         violation.MatchType,
 		MatchRule:         violation.MatchRule,
 		Message:           violation.Message,
+		IsIllegal:         violation.IsIllegal,
 		LabelActionStatus: violation.LabelActionStatus,
 		LabelActionResult: violation.LabelActionResult,
 		Status:            violation.Status,
