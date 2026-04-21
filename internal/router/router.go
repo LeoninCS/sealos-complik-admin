@@ -19,7 +19,7 @@ func InitRouter(cfg *config.Config) (*gin.Engine, error) {
 	g := gin.Default()
 	g.GET("/health", HealthCheck)
 
-	ban.InitBanRoutes(g)
+	ban.InitBanRoutes(g, cfg)
 	complikviolation.InitRoutes(g)
 	if err := commitment.InitCommitmentRoutes(g, cfg); err != nil {
 		return nil, fmt.Errorf("init commitment routes: %w", err)
