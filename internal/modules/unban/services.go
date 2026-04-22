@@ -40,13 +40,13 @@ func (s *Service) CreateUnban(ctx context.Context, req CreateUnbanRequest) error
 	return nil
 }
 
-// DeleteUnbans deletes all unban records for the given namespace.
-func (s *Service) DeleteUnbans(ctx context.Context, namespace string) error {
-	if err := validateNamespace(namespace); err != nil {
-		return err
+// DeleteUnbanByID deletes a single unban record by id.
+func (s *Service) DeleteUnbanByID(ctx context.Context, id uint64) error {
+	if id == 0 {
+		return ErrUnbanInvalidInput
 	}
 
-	if err := s.repository.DeleteUnbansByNamespace(ctx, namespace); err != nil {
+	if err := s.repository.DeleteUnbanByID(ctx, id); err != nil {
 		return translateRepositoryError(err)
 	}
 
@@ -130,6 +130,7 @@ func translateRepositoryError(err error) error {
 
 func toUnbanResponse(record *Unban) *UnbanResponse {
 	return &UnbanResponse{
+		ID:           record.ID,
 		Namespace:    record.Namespace,
 		OperatorName: record.OperatorName,
 		CreatedAt:    record.CreatedAt,

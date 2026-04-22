@@ -42,9 +42,9 @@ func (r *Repository) ListUnbans(ctx context.Context) ([]Unban, error) {
 	return unbans, nil
 }
 
-// DeleteUnbansByNamespace deletes all unban records for the given namespace.
-func (r *Repository) DeleteUnbansByNamespace(ctx context.Context, namespace string) error {
-	result := r.db.WithContext(ctx).Where("namespace = ?", namespace).Delete(&Unban{})
+// DeleteUnbanByID deletes a single unban record by id.
+func (r *Repository) DeleteUnbanByID(ctx context.Context, id uint64) error {
+	result := r.db.WithContext(ctx).Where("id = ?", id).Delete(&Unban{})
 	if result.Error != nil {
 		return result.Error
 	}

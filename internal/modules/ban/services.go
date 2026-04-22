@@ -95,13 +95,13 @@ func (s *Service) createBan(ctx context.Context, req CreateBanRequest, screensho
 	return nil
 }
 
-// DeleteBans deletes all ban records for the given namespace.
-func (s *Service) DeleteBans(ctx context.Context, namespace string) error {
-	if err := validateNamespace(namespace); err != nil {
-		return err
+// DeleteBanByID deletes a single ban record by id.
+func (s *Service) DeleteBanByID(ctx context.Context, id uint64) error {
+	if id == 0 {
+		return ErrBanInvalidInput
 	}
 
-	if err := s.repository.DeleteBansByNamespace(ctx, namespace); err != nil {
+	if err := s.repository.DeleteBanByID(ctx, id); err != nil {
 		return translateRepositoryError(err)
 	}
 
@@ -381,6 +381,7 @@ func translateRepositoryError(err error) error {
 
 func toBanResponse(ban *Ban) *BanResponse {
 	return &BanResponse{
+		ID:             ban.ID,
 		Namespace:      ban.Namespace,
 		Reason:         ban.Reason,
 		ScreenshotURLs: []string(ban.ScreenshotURLs),

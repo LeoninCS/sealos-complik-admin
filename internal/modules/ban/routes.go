@@ -29,7 +29,7 @@ func InitBanRoutes(g *gin.Engine, cfg *config.Config) {
 	g.POST("/api/bans/upload", handler.UploadBan)
 	g.POST("/api/bans", handler.CreateOrUploadBan)
 	g.GET("/api/bans/screenshots", handler.PreviewScreenshot)
-	g.DELETE("/api/bans/:namespace", handler.DeleteBans)
+	g.DELETE("/api/bans/id/:id", handler.DeleteBanByID)
 	g.GET("/api/bans/:namespace", handler.GetBans)
 	g.GET("/api/bans", handler.ListBans)
 	g.GET("/api/namespaces/:namespace/ban-status", handler.GetBanStatus)

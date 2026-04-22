@@ -43,9 +43,9 @@ func (r *Repository) ListBans(ctx context.Context) ([]Ban, error) {
 	return bans, nil
 }
 
-// DeleteBansByNamespace deletes all ban records for the given namespace.
-func (r *Repository) DeleteBansByNamespace(ctx context.Context, namespace string) error {
-	result := r.db.WithContext(ctx).Where("namespace = ?", namespace).Delete(&Ban{})
+// DeleteBanByID deletes a single ban record by id.
+func (r *Repository) DeleteBanByID(ctx context.Context, id uint64) error {
+	result := r.db.WithContext(ctx).Where("id = ?", id).Delete(&Ban{})
 	if result.Error != nil {
 		return result.Error
 	}

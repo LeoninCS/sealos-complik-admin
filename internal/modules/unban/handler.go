@@ -36,20 +36,24 @@ func (h *Handler) CreateUnban(c *gin.Context) {
 	})
 }
 
-// DeleteUnbans handles deleting all unban records for a namespace.
-func (h *Handler) DeleteUnbans(c *gin.Context) {
-	namespace, ok := bindUnbanNamespace(c)
-	if !ok {
+// DeleteUnbanByID handles deleting a single unban record by id.
+func (h *Handler) DeleteUnbanByID(c *gin.Context) {
+	var req UnbanIDRequest
+	if err := c.ShouldBindUri(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid request path",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	if err := h.service.DeleteUnbans(c.Request.Context(), namespace); err != nil {
-		h.respondWithServiceError(c, err, "failed to delete unbans")
+	if err := h.service.DeleteUnbanByID(c.Request.Context(), req.ID); err != nil {
+		h.respondWithServiceError(c, err, "failed to delete unban")
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "unbans deleted successfully",
+		"message": "unban deleted successfully",
 	})
 }
 

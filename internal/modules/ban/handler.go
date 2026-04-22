@@ -98,20 +98,24 @@ func (h *Handler) UploadBan(c *gin.Context) {
 	})
 }
 
-// DeleteBans handles deleting all ban records for a namespace.
-func (h *Handler) DeleteBans(c *gin.Context) {
-	namespace, ok := bindBanNamespace(c)
-	if !ok {
+// DeleteBanByID handles deleting a single ban record by id.
+func (h *Handler) DeleteBanByID(c *gin.Context) {
+	var req BanIDRequest
+	if err := c.ShouldBindUri(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "invalid request path",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	if err := h.service.DeleteBans(c.Request.Context(), namespace); err != nil {
-		h.respondWithServiceError(c, err, "failed to delete bans")
+	if err := h.service.DeleteBanByID(c.Request.Context(), req.ID); err != nil {
+		h.respondWithServiceError(c, err, "failed to delete ban")
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "bans deleted successfully",
+		"message": "ban deleted successfully",
 	})
 }
 
