@@ -147,12 +147,12 @@ If MySQL is not running inside the same network as the container, update `config
 | `POST` | `/api/bans` | Create ban record |
 | `GET` | `/api/bans` | List ban records |
 | `GET` | `/api/bans/:namespace` | Get bans by namespace |
-| `DELETE` | `/api/bans/:namespace` | Delete bans by namespace |
+| `DELETE` | `/api/bans/id/:id` | Delete a ban record by id |
 | `GET` | `/api/namespaces/:namespace/ban-status` | Check whether a namespace is banned |
 | `POST` | `/api/unbans` | Create unban record |
 | `GET` | `/api/unbans` | List unban records |
 | `GET` | `/api/unbans/:namespace` | Get unban records by namespace |
-| `DELETE` | `/api/unbans/:namespace` | Delete unban records by namespace |
+| `DELETE` | `/api/unbans/id/:id` | Delete an unban record by id |
 
 ### Example Requests
 
@@ -336,12 +336,12 @@ docker run --rm -p 8080:8080 sealos-complik-admin
 | `POST` | `/api/bans` | 创建封禁记录 |
 | `GET` | `/api/bans` | 查询封禁记录列表 |
 | `GET` | `/api/bans/:namespace` | 按 namespace 查询封禁记录 |
-| `DELETE` | `/api/bans/:namespace` | 删除 namespace 封禁记录 |
+| `DELETE` | `/api/bans/id/:id` | 按 id 删除封禁记录 |
 | `GET` | `/api/namespaces/:namespace/ban-status` | 查询 namespace 是否处于封禁状态 |
 | `POST` | `/api/unbans` | 创建解封记录 |
 | `GET` | `/api/unbans` | 查询解封记录列表 |
 | `GET` | `/api/unbans/:namespace` | 按 namespace 查询解封记录 |
-| `DELETE` | `/api/unbans/:namespace` | 删除 namespace 解封记录 |
+| `DELETE` | `/api/unbans/id/:id` | 按 id 删除解封记录 |
 
 ### 请求示例
 

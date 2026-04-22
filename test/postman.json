@@ -32,8 +32,18 @@
       "type": "string"
     },
     {
+      "key": "ban_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
       "key": "unban_namespace",
       "value": "ns-4001",
+      "type": "string"
+    },
+    {
+      "key": "unban_id",
+      "value": "1",
       "type": "string"
     }
   ],
@@ -791,6 +801,7 @@
                   "var jsonData = pm.response.json();",
                   "if (jsonData.length > 0) {",
                   "    pm.collectionVariables.set(\"ban_namespace\", jsonData[0].namespace);",
+                  "    pm.collectionVariables.set(\"ban_id\", String(jsonData[0].id));",
                   "}"
                 ]
               }
@@ -884,7 +895,7 @@
           "response": []
         },
         {
-          "name": "Delete Namespace Bans",
+          "name": "Delete Ban By ID",
           "event": [
             {
               "listen": "test",
@@ -896,7 +907,7 @@
                   "});",
                   "pm.test(\"response message is correct\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.eql(\"bans deleted successfully\");",
+                  "    pm.expect(jsonData.message).to.eql(\"ban deleted successfully\");",
                   "});"
                 ]
               }
@@ -906,17 +917,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/bans/{{ban_namespace}}",
+              "raw": "{{base_url}}/api/bans/id/{{ban_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "bans",
-                "{{ban_namespace}}"
+                "id",
+                "{{ban_id}}"
               ]
             },
-            "description": "Delete all ban records for a namespace."
+            "description": "Delete a single ban record by id."
           },
           "response": []
         }
@@ -995,6 +1007,7 @@
                   "var jsonData = pm.response.json();",
                   "if (jsonData.length > 0) {",
                   "    pm.collectionVariables.set(\"unban_namespace\", jsonData[0].namespace);",
+                  "    pm.collectionVariables.set(\"unban_id\", String(jsonData[0].id));",
                   "}"
                 ]
               }
@@ -1054,7 +1067,7 @@
           "response": []
         },
         {
-          "name": "Delete Namespace Unbans",
+          "name": "Delete Unban By ID",
           "event": [
             {
               "listen": "test",
@@ -1066,7 +1079,7 @@
                   "});",
                   "pm.test(\"response message is correct\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.message).to.eql(\"unbans deleted successfully\");",
+                  "    pm.expect(jsonData.message).to.eql(\"unban deleted successfully\");",
                   "});"
                 ]
               }
@@ -1076,17 +1089,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/unbans/{{unban_namespace}}",
+              "raw": "{{base_url}}/api/unbans/id/{{unban_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "unbans",
-                "{{unban_namespace}}"
+                "id",
+                "{{unban_id}}"
               ]
             },
-            "description": "Delete all unban records for a namespace."
+            "description": "Delete a single unban record by id."
           },
           "response": []
         }
