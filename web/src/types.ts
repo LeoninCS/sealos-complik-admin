@@ -101,6 +101,7 @@ export type CommitmentRecord = {
 
 export type BanRecord = {
   id: string;
+  apiId: number;
   namespace: string;
   reason: string;
   screenshotUrls: string[];
@@ -114,6 +115,7 @@ export type BanRecord = {
 
 export type UnbanRecord = {
   id: string;
+  apiId: number;
   namespace: string;
   operatorName: string;
   createdAt: string;
@@ -173,7 +175,7 @@ export type AppDataContextValue = {
   createUnbanRecord: (input: CreateUnbanInput) => Promise<void>;
   deleteConfigRecord: (configName: string) => Promise<void>;
   deleteCommitmentRecord: (namespace: string) => Promise<void>;
-  deleteBanRecord: (namespace: string) => Promise<void>;
-  deleteUnbanRecord: (namespace: string) => Promise<void>;
+  deleteBanRecord: (id: number) => Promise<void>;
+  deleteUnbanRecord: (id: number) => Promise<void>;
   deleteViolationRecord: (input: DeleteViolationInput) => Promise<void>;
 };

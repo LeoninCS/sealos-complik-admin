@@ -76,8 +76,8 @@ const defaultValue: AppDataContextValue = {
   createUnbanRecord: async () => undefined,
   deleteConfigRecord: async () => undefined,
   deleteCommitmentRecord: async () => undefined,
-  deleteBanRecord: async () => undefined,
-  deleteUnbanRecord: async () => undefined,
+  deleteBanRecord: async (_id: number) => undefined,
+  deleteUnbanRecord: async (_id: number) => undefined,
   deleteViolationRecord: async () => undefined,
 };
 
@@ -407,16 +407,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   const deleteBanRecord = useCallback(
-    async (namespace: string) => {
-      await apiDeleteBanRecord(namespace);
+    async (id: number) => {
+      await apiDeleteBanRecord(id);
       await refreshAll();
     },
     [refreshAll],
   );
 
   const deleteUnbanRecord = useCallback(
-    async (namespace: string) => {
-      await apiDeleteUnbanRecord(namespace);
+    async (id: number) => {
+      await apiDeleteUnbanRecord(id);
       await refreshAll();
     },
     [refreshAll],

@@ -35,6 +35,7 @@ type CommitmentDto = {
 };
 
 type BanDto = {
+  id: number;
   namespace: string;
   reason?: string;
   screenshot_urls?: string[];
@@ -46,6 +47,7 @@ type BanDto = {
 };
 
 type UnbanDto = {
+  id: number;
   namespace: string;
   operator_name: string;
   created_at: string;
@@ -153,7 +155,8 @@ function toBanRecord(item: BanDto): BanRecord {
   const endAt = item.ban_end_time ? new Date(item.ban_end_time).getTime() : null;
 
   return {
-    id: `${item.namespace}-${item.ban_start_time}`,
+    id: `ban-${item.id}`,
+    apiId: item.id,
     namespace: item.namespace,
     reason: item.reason ?? "",
     screenshotUrls: item.screenshot_urls ?? [],
@@ -168,7 +171,8 @@ function toBanRecord(item: BanDto): BanRecord {
 
 function toUnbanRecord(item: UnbanDto): UnbanRecord {
   return {
-    id: `${item.namespace}-${item.created_at}`,
+    id: `unban-${item.id}`,
+    apiId: item.id,
     namespace: item.namespace,
     operatorName: item.operator_name,
     createdAt: formatDateTime(item.created_at),
@@ -361,8 +365,8 @@ export async function createBanRecord(input: CreateBanInput) {
   }
 }
 
-export async function deleteBanRecord(namespace: string) {
-  await request(`/api/bans/${encodeURIComponent(namespace)}`, {
+export async function deleteBanRecord(id: number) {
+  await request(`/api/bans/id/${id}`, {
     method: "DELETE",
   });
 }
@@ -382,8 +386,8 @@ export async function createUnbanRecord(input: CreateUnbanInput) {
   });
 }
 
-export async function deleteUnbanRecord(namespace: string) {
-  await request(`/api/unbans/${encodeURIComponent(namespace)}`, {
+export async function deleteUnbanRecord(id: number) {
+  await request(`/api/unbans/id/${id}`, {
     method: "DELETE",
   });
 }

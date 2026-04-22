@@ -309,7 +309,7 @@ export function BansPage() {
         onClose={() => setPendingDelete(null)}
         onConfirm={() => {
           if (!pendingDelete) return;
-          void deleteBanRecord(pendingDelete.namespace).then(() => {
+          void deleteBanRecord(pendingDelete.apiId).then(() => {
             if (selected?.id === pendingDelete.id) {
               setSelected(null);
             }

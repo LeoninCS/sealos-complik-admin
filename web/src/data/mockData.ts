@@ -295,6 +295,7 @@ export const commitmentRecords: CommitmentRecord[] = [
 export const banRecords: BanRecord[] = [
   {
     id: "ban-1",
+    apiId: 1,
     namespace: "prod-finance",
     reason: "## 封禁说明\n- 敏感关键字命中\n- 需要临时封禁复核",
     screenshotUrls: ["https://files.example.com/prod-finance-ban-1.png"],
@@ -307,6 +308,7 @@ export const banRecords: BanRecord[] = [
   },
   {
     id: "ban-2",
+    apiId: 2,
     namespace: "ops-tools",
     reason: "进程规则命中，待确认授权范围",
     screenshotUrls: [],
@@ -322,6 +324,7 @@ export const banRecords: BanRecord[] = [
 export const unbanRecords: UnbanRecord[] = [
   {
     id: "unban-1",
+    apiId: 1,
     namespace: "growth-ops",
     operatorName: "Bob",
     createdAt: "2026-04-06 16:18",
@@ -329,6 +332,7 @@ export const unbanRecords: UnbanRecord[] = [
   },
   {
     id: "unban-2",
+    apiId: 2,
     namespace: "ops-tools",
     operatorName: "Alice",
     createdAt: "2026-04-05 18:30",

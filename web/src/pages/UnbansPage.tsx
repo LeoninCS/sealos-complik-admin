@@ -227,7 +227,7 @@ export function UnbansPage() {
         onClose={() => setPendingDelete(null)}
         onConfirm={() => {
           if (!pendingDelete) return;
-          void deleteUnbanRecord(pendingDelete.namespace).then(() => {
+          void deleteUnbanRecord(pendingDelete.apiId).then(() => {
             if (selected?.id === pendingDelete.id) {
               setSelected(null);
             }
