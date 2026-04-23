@@ -11,10 +11,12 @@ Administrative backend service for managing project configuration and user compl
 ### Features
 
 - Health check endpoint for service monitoring
-- CRUD APIs for project configs and user commitments
-- Record and query APIs for violations, bans, and unban operations
-- User status endpoints for ban and violation checks
-- YAML-based configuration and file logging
+- CRUD APIs for project configs, commitments, bans, and unban operations
+- Split violation APIs for CompliK and Procscan event storage and querying
+- Ban screenshot upload and admin-side proxy preview
+- Markdown-ready ban reason storage and rendering support
+- Namespace status endpoints for bans and violations
+- YAML-based configuration, OSS integration, and file logging
 - Docker image for containerized deployment
 
 ### Tech Stack
@@ -35,7 +37,9 @@ Administrative backend service for managing project configuration and user compl
 |   |-- infra/               # Config, logger, database, migration
 |   |-- modules/             # Domain modules
 |   |   |-- ban/
+|   |   |-- complikviolation/
 |   |   |-- commitment/
+|   |   |-- procscanviolation/
 |   |   |-- projectconfig/
 |   |   |-- unban/
 |   |   `-- violation/
@@ -48,9 +52,11 @@ Administrative backend service for managing project configuration and user compl
 ### Modules
 
 - `projectconfig`: store and manage project-level configuration records
-- `commitment`: manage uploaded commitment file metadata per user
-- `violation`: track user violation records
-- `ban`: track ban history and active ban status
+- `commitment`: manage uploaded commitment files and download streaming
+- `complikviolation`: store and query CompliK content violation events
+- `procscanviolation`: store and query Procscan process violation events
+- `violation`: legacy generic violation APIs kept for compatibility
+- `ban`: manage ban history, markdown reasons, screenshot upload, and screenshot proxy preview
 - `unban`: track unban actions
 
 ### Requirements
@@ -69,7 +75,11 @@ COLLATE utf8mb4_unicode_ci;
 
 ### Configuration
 
-The application reads `configs/config.yaml` by default.
+The application resolves the config file in this order:
+
+1. `CONFIG_FILE`
+2. `/config/config.yaml`
+3. `configs/config.yaml`
 
 ```yaml
 port: 8080
@@ -82,6 +92,14 @@ database:
   name: sealos-complik-admin
 
 log_dir: logs
+
+oss:
+  endpoint: http://minio.objectstorage-system.svc.cluster.local
+  bucket: sealos-complik-admin
+  access_key_id: minioadmin
+  access_key_secret: minioadmin
+  public_base_url: https://files.example.com
+  object_prefix: complik-admin
 ```
 
 Notes:
@@ -89,8 +107,10 @@ Notes:
 - Tables are auto-migrated at startup.
 - The application does not create the MySQL database itself.
 - Logs are written to the directory configured by `log_dir`.
-- `oss.endpoint` now uses an S3-compatible endpoint (such as MinIO), for example `http://minio.objectstorage-system.svc.cluster.local`.
-- `oss.public_base_url` should be a URL reachable by the browser if you want frontend users to open uploaded files directly.
+- `oss.endpoint` uses an S3-compatible endpoint such as MinIO.
+- `oss.object_prefix` is used for commitment and ban screenshot object keys.
+- Ban screenshots support admin-side proxy preview through `/api/bans/screenshots`.
+- CompliK and Procscan violation list endpoints return illegal events by default. `include_all=true` returns the full event stream.
 
 ### Run Locally
 
@@ -131,20 +151,39 @@ If MySQL is not running inside the same network as the container, update `config
 | `GET` | `/health` | Health check |
 | `POST` | `/api/configs` | Create project config |
 | `GET` | `/api/configs` | List project configs |
+| `GET` | `/api/configs/type/:config_type` | List project configs by type |
 | `GET` | `/api/configs/:config_name` | Get project config by name |
 | `PUT` | `/api/configs/:config_name` | Update project config |
 | `DELETE` | `/api/configs/:config_name` | Delete project config |
 | `POST` | `/api/commitments` | Create commitment |
+| `POST` | `/api/commitments/upload` | Upload commitment file |
 | `GET` | `/api/commitments` | List commitments |
 | `GET` | `/api/commitments/:namespace` | Get commitment by namespace |
+| `GET` | `/api/commitments/:namespace/download` | Download commitment file |
 | `PUT` | `/api/commitments/:namespace` | Update commitment |
 | `DELETE` | `/api/commitments/:namespace` | Delete commitment |
+| `POST` | `/api/complik-violations` | Create CompliK violation event |
+| `GET` | `/api/complik-violations` | List CompliK illegal events, `include_all=true` returns all events |
+| `GET` | `/api/complik-violations/:namespace` | Get CompliK events by namespace |
+| `PUT` | `/api/complik-violations/:id/status` | Update CompliK event status |
+| `DELETE` | `/api/complik-violations/id/:id` | Delete CompliK event by id |
+| `DELETE` | `/api/complik-violations/:namespace` | Delete CompliK events by namespace |
+| `GET` | `/api/namespaces/:namespace/complik-violations-status` | Check whether a namespace has CompliK illegal events |
+| `POST` | `/api/procscan-violations` | Create Procscan violation event |
+| `GET` | `/api/procscan-violations` | List Procscan illegal events, `include_all=true` returns all events |
+| `GET` | `/api/procscan-violations/:namespace` | Get Procscan events by namespace |
+| `PUT` | `/api/procscan-violations/:id/status` | Update Procscan event status |
+| `DELETE` | `/api/procscan-violations/id/:id` | Delete Procscan event by id |
+| `DELETE` | `/api/procscan-violations/:namespace` | Delete Procscan events by namespace |
+| `GET` | `/api/namespaces/:namespace/procscan-violations-status` | Check whether a namespace has Procscan illegal events |
 | `POST` | `/api/violations` | Create violation record |
 | `GET` | `/api/violations` | List violation records |
 | `GET` | `/api/violations/:namespace` | Get violations by namespace |
 | `DELETE` | `/api/violations/:namespace` | Delete violations by namespace |
 | `GET` | `/api/namespaces/:namespace/violations-status` | Check whether a namespace has violations |
 | `POST` | `/api/bans` | Create ban record |
+| `POST` | `/api/bans/upload` | Create ban record with screenshot upload |
+| `GET` | `/api/bans/screenshots` | Proxy preview for ban screenshots |
 | `GET` | `/api/bans` | List ban records |
 | `GET` | `/api/bans/:namespace` | Get bans by namespace |
 | `DELETE` | `/api/bans/id/:id` | Delete a ban record by id |
@@ -187,6 +226,23 @@ curl -X POST http://localhost:8080/api/commitments \
   }'
 ```
 
+Upload a ban with screenshots:
+
+```bash
+curl -X POST http://localhost:8080/api/bans/upload \
+  -F "namespace=ns-demo" \
+  -F "reason=## Ban Reason\n- screenshot attached" \
+  -F "ban_start_time=2026-04-21T14:30:00Z" \
+  -F "operator_name=alice" \
+  -F "screenshots=@/tmp/sample.png"
+```
+
+List all CompliK events:
+
+```bash
+curl "http://localhost:8080/api/complik-violations?include_all=true"
+```
+
 ### API Collection
 
 Import `test/postman.json` into Postman to quickly try the available APIs.
@@ -202,10 +258,12 @@ Import `test/postman.json` into Postman to quickly try the available APIs.
 ### 功能特性
 
 - 提供健康检查接口，便于服务监控
-- 提供项目配置和用户承诺书的 CRUD 接口
-- 提供违规、封禁、解封相关记录的录入与查询接口
-- 提供用户封禁状态与违规状态查询接口
-- 使用 YAML 配置文件和本地日志目录
+- 提供项目配置、承诺书、封禁、解封的 CRUD 接口
+- 提供 CompliK 与 Procscan 的分离违规事件接口
+- 支持封禁截图上传与 admin 代理预览
+- 支持封禁原因以 Markdown 形式存储与展示
+- 提供 namespace 维度的封禁状态与违规状态查询接口
+- 使用 YAML 配置文件、OSS 和本地日志目录
 - 提供 Docker 镜像构建能力，便于容器化部署
 
 ### 技术栈
@@ -226,7 +284,9 @@ Import `test/postman.json` into Postman to quickly try the available APIs.
 |   |-- infra/               # 配置、日志、数据库、迁移
 |   |-- modules/             # 业务模块
 |   |   |-- ban/
+|   |   |-- complikviolation/
 |   |   |-- commitment/
+|   |   |-- procscanviolation/
 |   |   |-- projectconfig/
 |   |   |-- unban/
 |   |   `-- violation/
@@ -239,9 +299,11 @@ Import `test/postman.json` into Postman to quickly try the available APIs.
 ### 模块说明
 
 - `projectconfig`：管理项目级配置项
-- `commitment`：管理用户承诺文件元数据
-- `violation`：记录用户违规信息
-- `ban`：记录封禁历史和当前封禁状态
+- `commitment`：管理承诺书文件上传和下载流
+- `complikviolation`：记录和查询 CompliK 内容违规事件
+- `procscanviolation`：记录和查询 Procscan 进程违规事件
+- `violation`：保留兼容用的通用违规接口
+- `ban`：管理封禁历史、Markdown 描述、截图上传和截图代理预览
 - `unban`：记录解封操作
 
 ### 运行要求
@@ -260,7 +322,11 @@ COLLATE utf8mb4_unicode_ci;
 
 ### 配置说明
 
-应用默认读取 `configs/config.yaml`。
+应用按以下顺序解析配置文件：
+
+1. `CONFIG_FILE`
+2. `/config/config.yaml`
+3. `configs/config.yaml`
 
 ```yaml
 port: 8080
@@ -273,6 +339,14 @@ database:
   name: sealos-complik-admin
 
 log_dir: logs
+
+oss:
+  endpoint: http://minio.objectstorage-system.svc.cluster.local
+  bucket: sealos-complik-admin
+  access_key_id: minioadmin
+  access_key_secret: minioadmin
+  public_base_url: https://files.example.com
+  object_prefix: complik-admin
 ```
 
 说明：
@@ -280,6 +354,10 @@ log_dir: logs
 - 服务启动时会自动执行数据表迁移。
 - 应用不会自动创建 MySQL 数据库本身。
 - 日志会写入 `log_dir` 指定的目录。
+- `oss.endpoint` 使用兼容 S3 的对象存储地址。
+- `oss.object_prefix` 用于承诺书和封禁截图对象路径前缀。
+- 封禁截图支持通过 `/api/bans/screenshots` 走 admin 代理预览。
+- CompliK 和 Procscan 违规列表接口默认返回违规事件，`include_all=true` 返回全量事件。
 
 ### 本地运行
 
@@ -320,20 +398,39 @@ docker run --rm -p 8080:8080 sealos-complik-admin
 | `GET` | `/health` | 健康检查 |
 | `POST` | `/api/configs` | 创建项目配置 |
 | `GET` | `/api/configs` | 查询项目配置列表 |
+| `GET` | `/api/configs/type/:config_type` | 按配置类型查询项目配置 |
 | `GET` | `/api/configs/:config_name` | 按名称查询项目配置 |
 | `PUT` | `/api/configs/:config_name` | 更新项目配置 |
 | `DELETE` | `/api/configs/:config_name` | 删除项目配置 |
 | `POST` | `/api/commitments` | 创建承诺记录 |
+| `POST` | `/api/commitments/upload` | 上传承诺书文件 |
 | `GET` | `/api/commitments` | 查询承诺记录列表 |
 | `GET` | `/api/commitments/:namespace` | 按 namespace 查询承诺记录 |
+| `GET` | `/api/commitments/:namespace/download` | 下载承诺书文件 |
 | `PUT` | `/api/commitments/:namespace` | 更新承诺记录 |
 | `DELETE` | `/api/commitments/:namespace` | 删除承诺记录 |
+| `POST` | `/api/complik-violations` | 创建 CompliK 违规事件 |
+| `GET` | `/api/complik-violations` | 查询 CompliK 违规事件列表，`include_all=true` 返回全量事件 |
+| `GET` | `/api/complik-violations/:namespace` | 按 namespace 查询 CompliK 事件 |
+| `PUT` | `/api/complik-violations/:id/status` | 更新 CompliK 事件状态 |
+| `DELETE` | `/api/complik-violations/id/:id` | 按 id 删除 CompliK 事件 |
+| `DELETE` | `/api/complik-violations/:namespace` | 按 namespace 删除 CompliK 事件 |
+| `GET` | `/api/namespaces/:namespace/complik-violations-status` | 查询 namespace 是否存在 CompliK 违规事件 |
+| `POST` | `/api/procscan-violations` | 创建 Procscan 违规事件 |
+| `GET` | `/api/procscan-violations` | 查询 Procscan 违规事件列表，`include_all=true` 返回全量事件 |
+| `GET` | `/api/procscan-violations/:namespace` | 按 namespace 查询 Procscan 事件 |
+| `PUT` | `/api/procscan-violations/:id/status` | 更新 Procscan 事件状态 |
+| `DELETE` | `/api/procscan-violations/id/:id` | 按 id 删除 Procscan 事件 |
+| `DELETE` | `/api/procscan-violations/:namespace` | 按 namespace 删除 Procscan 事件 |
+| `GET` | `/api/namespaces/:namespace/procscan-violations-status` | 查询 namespace 是否存在 Procscan 违规事件 |
 | `POST` | `/api/violations` | 创建违规记录 |
 | `GET` | `/api/violations` | 查询违规记录列表 |
 | `GET` | `/api/violations/:namespace` | 按 namespace 查询违规记录 |
 | `DELETE` | `/api/violations/:namespace` | 删除 namespace 违规记录 |
 | `GET` | `/api/namespaces/:namespace/violations-status` | 查询 namespace 是否有违规记录 |
 | `POST` | `/api/bans` | 创建封禁记录 |
+| `POST` | `/api/bans/upload` | 上传截图并创建封禁记录 |
+| `GET` | `/api/bans/screenshots` | admin 代理预览封禁截图 |
 | `GET` | `/api/bans` | 查询封禁记录列表 |
 | `GET` | `/api/bans/:namespace` | 按 namespace 查询封禁记录 |
 | `DELETE` | `/api/bans/id/:id` | 按 id 删除封禁记录 |
@@ -374,6 +471,23 @@ curl -X POST http://localhost:8080/api/commitments \
     "file_name": "commitment.pdf",
     "file_url": "https://oss.example.com/commitments/commitment.pdf"
   }'
+```
+
+上传带截图的封禁记录：
+
+```bash
+curl -X POST http://localhost:8080/api/bans/upload \
+  -F "namespace=ns-demo" \
+  -F "reason=## 封禁说明\n- 已附带截图" \
+  -F "ban_start_time=2026-04-21T14:30:00Z" \
+  -F "operator_name=alice" \
+  -F "screenshots=@/tmp/sample.png"
+```
+
+查询 CompliK 全量事件：
+
+```bash
+curl "http://localhost:8080/api/complik-violations?include_all=true"
 ```
 
 ### 接口调试
