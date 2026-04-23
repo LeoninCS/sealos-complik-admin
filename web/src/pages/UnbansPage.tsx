@@ -223,7 +223,7 @@ export function UnbansPage() {
       </Modal>
 
       <ConfirmModal
-        description={pendingDelete ? `删除后将从当前前端列表中移除 namespace ${pendingDelete.namespace} 的解封记录。` : ""}
+        description={pendingDelete ? `删除后仅移除当前这条解封记录（namespace: ${pendingDelete.namespace}，操作人: ${pendingDelete.operatorName}）。` : ""}
         onClose={() => setPendingDelete(null)}
         onConfirm={() => {
           if (!pendingDelete) return;

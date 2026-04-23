@@ -417,9 +417,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const deleteUnbanRecord = useCallback(
     async (id: number) => {
       await apiDeleteUnbanRecord(id);
-      await refreshAll();
+      setUnbanRecords((current) => current.filter((item) => item.apiId !== id));
     },
-    [refreshAll],
+    [],
   );
 
   const deleteViolationRecord = useCallback(
