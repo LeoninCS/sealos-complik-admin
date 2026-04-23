@@ -12,7 +12,6 @@ import {
   PageHeader,
   Select,
   SurfaceCard,
-  StatusPill,
 } from "../components/ui";
 import { MarkdownInput } from "../components/MarkdownInput";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
@@ -131,7 +130,6 @@ export function BansPage() {
                 <th>描述</th>
                 <th>开始时间</th>
                 <th>操作人</th>
-                <th>状态</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -150,9 +148,6 @@ export function BansPage() {
                   </td>
                   <td>{item.banStartTime}</td>
                   <td>{item.operatorName}</td>
-                  <td>
-                    <StatusPill tone="warn">永久封禁</StatusPill>
-                  </td>
                   <td>
                     <Button variant="ghost" onClick={() => setSelected(item)}>
                       查看
@@ -186,7 +181,6 @@ export function BansPage() {
                 { label: "namespace", value: selected.namespace },
                 { label: "开始时间", value: selected.banStartTime },
                 { label: "操作人", value: selected.operatorName },
-                { label: "状态", value: "永久封禁" },
               ]}
             />
             <div className="ban-detail-section">
