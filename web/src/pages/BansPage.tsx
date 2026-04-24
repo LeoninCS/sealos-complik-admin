@@ -13,7 +13,6 @@ import {
   Select,
   SurfaceCard,
 } from "../components/ui";
-import { MarkdownInput } from "../components/MarkdownInput";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 import { useAppData } from "../contexts/AppDataContext";
 import { useManagedOperatorOptions } from "../hooks/useOperatorOptions";
@@ -48,6 +47,43 @@ export function BansPage() {
     setBanStartTime("");
     setOperatorName("");
     setScreenshots([]);
+  };
+
+  const appendScreenshots = (files: File[]) => {
+    if (files.length === 0) {
+      return;
+    }
+
+    setScreenshots((current) => [...current, ...files].slice(0, 6));
+  };
+
+  const removeScreenshot = (target: File) => {
+    setScreenshots((current) =>
+      current.filter(
+        (file) =>
+          !(
+            file.name === target.name &&
+            file.size === target.size &&
+            file.lastModified === target.lastModified &&
+            file.type === target.type
+          ),
+      ),
+    );
+  };
+
+  const handleReasonPaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const imageFiles = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
+
+    if (imageFiles.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    appendScreenshots(imageFiles);
+    setFormError(null);
   };
 
   const rows = useMemo(() => {
@@ -99,7 +135,7 @@ export function BansPage() {
       <PageHeader
         kicker="Bans"
         title="封禁记录"
-        description="录入和查看封禁记录，操作人从固定名单选择，描述支持 markdown，封禁截图支持一起上传。"
+        description="录入和查看封禁记录，操作人从固定名单选择，描述使用纯文本输入，截图支持上传和粘贴。"
         actions={<Button variant="primary" onClick={() => setOpen(true)}>新增封禁</Button>}
       />
 
@@ -169,7 +205,7 @@ export function BansPage() {
       </SurfaceCard>
 
       <Drawer
-        description="这里展示 markdown 描述和截图附件。"
+        description="这里展示描述内容和截图附件。"
         onClose={() => setSelected(null)}
         open={Boolean(selected)}
         title={selected ? selected.namespace : ""}
@@ -220,7 +256,7 @@ export function BansPage() {
       </Drawer>
 
       <Modal
-        description="描述使用 markdown 文本录入，截图会和封禁记录一起保存。"
+        description="描述使用纯文本录入，支持在输入框里直接粘贴图片，截图会和封禁记录一起保存。"
         onClose={() => {
           setOpen(false);
           setFormError(null);
@@ -233,12 +269,18 @@ export function BansPage() {
           <Field label="namespace">
             <Input placeholder="例如：prod-finance" value={namespace} onChange={(event) => setNamespace(event.target.value)} />
           </Field>
-          <Field label="描述（Markdown）">
-            <MarkdownInput
-              placeholder={"例如：\n## 封禁说明\n- 违规链接已核实\n- 影响范围：prod-finance\n\n附上排查结论和后续动作。"}
-              value={reason}
-              onChange={setReason}
-            />
+          <Field label="描述（TXT）">
+            <div className="plain-text-input-shell">
+              <textarea
+                className="text-area plain-text-input-textarea"
+                placeholder={"例如：\n封禁说明：违规链接已核实\n影响范围：prod-finance\n\n附上排查结论和后续动作。"}
+                spellCheck={false}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                onPaste={handleReasonPaste}
+              />
+            </div>
+            <div className="muted-text">支持直接输入纯文本，也支持在输入框里复制粘贴图片。</div>
           </Field>
           <Field label="开始时间">
             <Input type="datetime-local" value={banStartTime} onChange={(event) => setBanStartTime(event.target.value)} />
@@ -264,15 +306,23 @@ export function BansPage() {
                 accept="image/png,image/jpeg,image/webp,image/gif"
                 multiple
                 type="file"
-                onChange={(event) => setScreenshots(Array.from(event.target.files ?? []))}
+                onChange={(event) => {
+                  appendScreenshots(Array.from(event.target.files ?? []));
+                  event.target.value = "";
+                }}
               />
-              <div className="muted-text">支持 PNG、JPG、WEBP、GIF，单次最多 6 张。</div>
+              <div className="muted-text">支持 PNG、JPG、WEBP、GIF，最多 6 张。文件选择和粘贴图片会合并到同一列表。</div>
               {screenshots.length > 0 ? (
                 <div className="upload-list">
                   {screenshots.map((file) => (
                     <div className="upload-item" key={`${file.name}-${file.size}-${file.lastModified}`}>
                       <span>{file.name}</span>
-                      <span className="muted-text">{Math.max(1, Math.round(file.size / 1024))} KB</span>
+                      <div className="upload-item-actions">
+                        <span className="muted-text">{Math.max(1, Math.round(file.size / 1024))} KB</span>
+                        <button className="table-row-button" type="button" onClick={() => removeScreenshot(file)}>
+                          删除
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

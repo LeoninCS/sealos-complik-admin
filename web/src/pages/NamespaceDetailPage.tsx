@@ -26,7 +26,7 @@ export function NamespaceDetailPage() {
   const { namespace } = useParams();
   const navigate = useNavigate();
   const { deleteViolationRecord, error, isLoading, namespaceProfiles, refreshAll, violations } = useAppData();
-  const [keyword, setKeyword] = useState(namespace ?? "");
+  const [keyword, setKeyword] = useState("");
   const [selectedViolation, setSelectedViolation] = useState<ViolationRecord | null>(null);
   const [pendingDelete, setPendingDelete] = useState<ViolationRecord | null>(null);
 

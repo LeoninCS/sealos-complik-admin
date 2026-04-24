@@ -780,11 +780,43 @@ table {
 .upload-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 16px;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: #f8fafc;
+}
+
+.upload-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.plain-text-input-shell {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.95);
+  overflow: hidden;
+}
+
+.plain-text-input-textarea {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  min-height: 220px;
+  padding: 14px;
+  font: inherit;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  resize: vertical;
+}
+
+.plain-text-input-textarea:focus {
+  outline: none;
 }
 
 .markdown-input-shell {
