@@ -42,7 +42,7 @@ function renderInlineMarkdown(source: string) {
 
       const titleAttribute = title ? ` title="${escapeHTML(title)}"` : "";
       return pushToken(
-        `<img class="markdown-image" src="${safeURL}" alt="${escapeHTML(alt)}"${titleAttribute} loading="lazy" />`,
+        `<img class="markdown-image" src="${safeURL}" alt="${escapeHTML(alt)}" data-preview-src="${safeURL}" data-preview-alt="${escapeHTML(alt)}"${titleAttribute} loading="lazy" />`,
       );
     },
   );
@@ -186,11 +186,42 @@ function renderMarkdownToHTML(source: string) {
   return parts.join("");
 }
 
-export function MarkdownRenderer({ content }: { content: string }) {
+export function MarkdownRenderer({
+  content,
+  onImageClick,
+}: {
+  content: string;
+  onImageClick?: (payload: { url: string; alt: string }) => void;
+}) {
   const normalized = content.trim();
   if (!normalized) {
     return <div className="muted-text">暂无描述</div>;
   }
 
-  return <div className="markdown-content" dangerouslySetInnerHTML={{ __html: renderMarkdownToHTML(normalized) }} />;
+  return (
+    <div
+      className="markdown-content"
+      dangerouslySetInnerHTML={{ __html: renderMarkdownToHTML(normalized) }}
+      onClick={(event) => {
+        if (!onImageClick) {
+          return;
+        }
+
+        const target = event.target;
+        if (!(target instanceof HTMLImageElement)) {
+          return;
+        }
+
+        const url = target.dataset.previewSrc;
+        if (!url) {
+          return;
+        }
+
+        onImageClick({
+          url,
+          alt: target.dataset.previewAlt ?? target.alt ?? "图片预览",
+        });
+      }}
+    />
+  );
 }

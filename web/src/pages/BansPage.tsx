@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
@@ -35,6 +35,7 @@ export function BansPage() {
   const [screenshots, setScreenshots] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [previewingScreenshot, setPreviewingScreenshot] = useState<{ name: string; url: string } | null>(null);
 
   const { operatorConfigType, operatorOptions, operatorSource } = useManagedOperatorOptions(configRecords, [
     ...banRecords.map((item) => item.operatorName),
@@ -48,6 +49,21 @@ export function BansPage() {
     setOperatorName("");
     setScreenshots([]);
   };
+
+  const screenshotPreviews = useMemo(
+    () =>
+      screenshots.map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      })),
+    [screenshots],
+  );
+
+  useEffect(() => {
+    return () => {
+      screenshotPreviews.forEach((item) => URL.revokeObjectURL(item.url));
+    };
+  }, [screenshotPreviews]);
 
   const appendScreenshots = (files: File[]) => {
     if (files.length === 0) {
@@ -222,7 +238,10 @@ export function BansPage() {
             <div className="ban-detail-section">
               <div className="detail-label">描述</div>
               <div className="detail-value">
-                <MarkdownRenderer content={selected.reason} />
+                <MarkdownRenderer
+                  content={selected.reason}
+                  onImageClick={({ url, alt }) => setPreviewingScreenshot({ name: alt || "图片预览", url })}
+                />
               </div>
             </div>
             <div className="ban-detail-section">
@@ -232,10 +251,15 @@ export function BansPage() {
                   {selected.screenshotUrls.map((url, index) => {
                     const previewURL = buildBanScreenshotPreviewURL(url);
                     return (
-                      <a className="screenshot-card" href={previewURL} key={`${url}-${index}`} rel="noreferrer" target="_blank">
+                      <button
+                        className="screenshot-card"
+                        key={`${url}-${index}`}
+                        type="button"
+                        onClick={() => setPreviewingScreenshot({ name: `封禁截图 ${index + 1}`, url: previewURL })}
+                      >
                         <img alt={`封禁截图 ${index + 1}`} className="screenshot-image" loading="lazy" src={previewURL} />
                         <span className="screenshot-caption">截图 {index + 1}</span>
-                      </a>
+                      </button>
                     );
                   })}
                 </div>
@@ -279,6 +303,26 @@ export function BansPage() {
                 onChange={(event) => setReason(event.target.value)}
                 onPaste={handleReasonPaste}
               />
+              {screenshotPreviews.length > 0 ? (
+                <div className="plain-text-input-attachments">
+                  {screenshotPreviews.map(({ file, url }) => (
+                    <div className="plain-text-attachment-card" key={`${file.name}-${file.size}-${file.lastModified}`}>
+                      <img
+                        alt={file.name}
+                        className="plain-text-attachment-image"
+                        src={url}
+                        onClick={() => setPreviewingScreenshot({ name: file.name, url })}
+                      />
+                      <div className="plain-text-attachment-meta">
+                        <span className="plain-text-attachment-name">{file.name}</span>
+                        <button className="table-row-button" type="button" onClick={() => removeScreenshot(file)}>
+                          删除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="muted-text">支持直接输入纯文本，也支持在输入框里复制粘贴图片。</div>
           </Field>
@@ -346,6 +390,19 @@ export function BansPage() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        description="单击图片可查看大图。"
+        onClose={() => setPreviewingScreenshot(null)}
+        open={Boolean(previewingScreenshot)}
+        title={previewingScreenshot?.name ?? "图片预览"}
+      >
+        {previewingScreenshot ? (
+          <div className="image-preview-modal-body">
+            <img alt={previewingScreenshot.name} className="image-preview-modal-image" src={previewingScreenshot.url} />
+          </div>
+        ) : null}
       </Modal>
 
       <ConfirmModal
