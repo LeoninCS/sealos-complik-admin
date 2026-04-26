@@ -15,8 +15,6 @@ var (
 	ErrViolationNotFound     = errors.New("complik violation not found")
 )
 
-const defaultStatus = "open"
-
 type Service struct {
 	repository *Repository
 }
@@ -59,7 +57,6 @@ func (s *Service) CreateViolation(ctx context.Context, req CreateViolationReques
 		Explanation:   input.Explanation,
 		IsIllegal:     input.IsIllegal,
 		IsTest:        input.IsTest,
-		Status:        input.Status,
 		DetectedAt:    input.DetectedAt,
 		RawPayload:    rawPayloadJSON,
 	}
@@ -127,19 +124,6 @@ func (s *Service) ListViolations(ctx context.Context, includeAll bool) ([]Violat
 	return responses, nil
 }
 
-func (s *Service) UpdateViolationStatus(ctx context.Context, id uint64, status string) error {
-	trimmedStatus := strings.TrimSpace(status)
-	if id == 0 || (trimmedStatus != "open" && trimmedStatus != "closed") {
-		return ErrViolationInvalidInput
-	}
-
-	if err := s.repository.UpdateViolationStatus(ctx, id, trimmedStatus); err != nil {
-		return translateRepositoryError(err)
-	}
-
-	return nil
-}
-
 func (s *Service) GetViolationStatus(ctx context.Context, namespace string) (*ViolationStatusResponse, error) {
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err
@@ -168,7 +152,6 @@ type normalizedViolationInput struct {
 	Explanation   string
 	IsIllegal     bool
 	IsTest        bool
-	Status        string
 	DetectedAt    time.Time
 	RawPayload    json.RawMessage
 }
@@ -176,13 +159,9 @@ type normalizedViolationInput struct {
 func normalizeViolationInput(req CreateViolationRequest) (*normalizedViolationInput, error) {
 	trimmedNamespace := strings.TrimSpace(req.Namespace)
 	trimmedDetectorName := strings.TrimSpace(req.DetectorName)
-	trimmedStatus := strings.TrimSpace(req.Status)
 
 	if trimmedNamespace == "" || trimmedDetectorName == "" || req.DetectedAt.IsZero() {
 		return nil, ErrViolationInvalidInput
-	}
-	if trimmedStatus == "" {
-		trimmedStatus = defaultStatus
 	}
 
 	isIllegal := true
@@ -205,7 +184,6 @@ func normalizeViolationInput(req CreateViolationRequest) (*normalizedViolationIn
 		Explanation:   strings.TrimSpace(req.Explanation),
 		IsIllegal:     isIllegal,
 		IsTest:        req.IsTest,
-		Status:        trimmedStatus,
 		DetectedAt:    req.DetectedAt,
 		RawPayload:    req.RawPayload,
 	}, nil
@@ -294,7 +272,6 @@ func toViolationResponse(violation *ComplikViolationEvent) *ViolationResponse {
 		Explanation:   violation.Explanation,
 		IsIllegal:     violation.IsIllegal,
 		IsTest:        violation.IsTest,
-		Status:        violation.Status,
 		DetectedAt:    violation.DetectedAt,
 		RawPayload:    parseRawPayload(violation.RawPayload),
 		CreatedAt:     violation.CreatedAt,

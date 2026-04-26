@@ -28,7 +28,6 @@ type CreateViolationRequest struct {
 	Explanation   string          `json:"explanation" binding:"omitempty"`
 	IsIllegal     *bool           `json:"is_illegal"`
 	IsTest        bool            `json:"is_test"`
-	Status        string          `json:"status" binding:"omitempty,max=32"`
 	DetectedAt    time.Time       `json:"detected_at" binding:"required"`
 	RawPayload    json.RawMessage `json:"raw_payload"`
 }
@@ -49,7 +48,6 @@ type ViolationResponse struct {
 	Explanation   string          `json:"explanation,omitempty"`
 	IsIllegal     bool            `json:"is_illegal"`
 	IsTest        bool            `json:"is_test"`
-	Status        string          `json:"status"`
 	DetectedAt    time.Time       `json:"detected_at"`
 	RawPayload    json.RawMessage `json:"raw_payload,omitempty"`
 	CreatedAt     time.Time       `json:"created_at"`
@@ -58,8 +56,4 @@ type ViolationResponse struct {
 
 type ViolationStatusResponse struct {
 	Violated bool `json:"violated"`
-}
-
-type UpdateViolationStatusRequest struct {
-	Status string `json:"status" binding:"required,oneof=open closed"`
 }

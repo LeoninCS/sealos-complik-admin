@@ -165,14 +165,12 @@ If MySQL is not running inside the same network as the container, update `config
 | `POST` | `/api/complik-violations` | Create CompliK violation event |
 | `GET` | `/api/complik-violations` | List CompliK illegal events, `include_all=true` returns all events |
 | `GET` | `/api/complik-violations/:namespace` | Get CompliK events by namespace |
-| `PUT` | `/api/complik-violations/:id/status` | Update CompliK event status |
 | `DELETE` | `/api/complik-violations/id/:id` | Delete CompliK event by id |
 | `DELETE` | `/api/complik-violations/:namespace` | Delete CompliK events by namespace |
 | `GET` | `/api/namespaces/:namespace/complik-violations-status` | Check whether a namespace has CompliK illegal events |
 | `POST` | `/api/procscan-violations` | Create Procscan violation event |
 | `GET` | `/api/procscan-violations` | List Procscan illegal events, `include_all=true` returns all events |
 | `GET` | `/api/procscan-violations/:namespace` | Get Procscan events by namespace |
-| `PUT` | `/api/procscan-violations/:id/status` | Update Procscan event status |
 | `DELETE` | `/api/procscan-violations/id/:id` | Delete Procscan event by id |
 | `DELETE` | `/api/procscan-violations/:namespace` | Delete Procscan events by namespace |
 | `GET` | `/api/namespaces/:namespace/procscan-violations-status` | Check whether a namespace has Procscan illegal events |
@@ -412,14 +410,12 @@ docker run --rm -p 8080:8080 sealos-complik-admin
 | `POST` | `/api/complik-violations` | 创建 CompliK 违规事件 |
 | `GET` | `/api/complik-violations` | 查询 CompliK 违规事件列表，`include_all=true` 返回全量事件 |
 | `GET` | `/api/complik-violations/:namespace` | 按 namespace 查询 CompliK 事件 |
-| `PUT` | `/api/complik-violations/:id/status` | 更新 CompliK 事件状态 |
 | `DELETE` | `/api/complik-violations/id/:id` | 按 id 删除 CompliK 事件 |
 | `DELETE` | `/api/complik-violations/:namespace` | 按 namespace 删除 CompliK 事件 |
 | `GET` | `/api/namespaces/:namespace/complik-violations-status` | 查询 namespace 是否存在 CompliK 违规事件 |
 | `POST` | `/api/procscan-violations` | 创建 Procscan 违规事件 |
 | `GET` | `/api/procscan-violations` | 查询 Procscan 违规事件列表，`include_all=true` 返回全量事件 |
 | `GET` | `/api/procscan-violations/:namespace` | 按 namespace 查询 Procscan 事件 |
-| `PUT` | `/api/procscan-violations/:id/status` | 更新 Procscan 事件状态 |
 | `DELETE` | `/api/procscan-violations/id/:id` | 按 id 删除 Procscan 事件 |
 | `DELETE` | `/api/procscan-violations/:namespace` | 按 namespace 删除 Procscan 事件 |
 | `GET` | `/api/namespaces/:namespace/procscan-violations-status` | 查询 namespace 是否存在 Procscan 违规事件 |

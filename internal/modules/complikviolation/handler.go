@@ -108,35 +108,6 @@ func (h *Handler) ListViolations(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handler) UpdateViolationStatus(c *gin.Context) {
-	var uriReq ViolationIDRequest
-	if err := c.ShouldBindUri(&uriReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "invalid request path",
-			"error":   err.Error(),
-		})
-		return
-	}
-
-	var req UpdateViolationStatusRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "invalid request body",
-			"error":   err.Error(),
-		})
-		return
-	}
-
-	if err := h.service.UpdateViolationStatus(c.Request.Context(), uriReq.ID, req.Status); err != nil {
-		h.respondWithServiceError(c, err, "failed to update complik violation status")
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "complik violation status updated successfully",
-	})
-}
-
 func (h *Handler) GetViolationStatus(c *gin.Context) {
 	namespace, ok := bindNamespace(c)
 	if !ok {
