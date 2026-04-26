@@ -63,7 +63,6 @@ type ComplikViolationDto = {
   url?: string;
   keywords?: string[];
   description?: string;
-  status: string;
   detected_at: string;
   raw_payload?: unknown;
   created_at?: string;
@@ -81,7 +80,6 @@ type ProcscanViolationDto = {
   label_action_status?: string;
   label_action_result?: string;
   message: string;
-  status: string;
   detected_at: string;
   raw_payload?: unknown;
   created_at?: string;
@@ -191,7 +189,6 @@ function toComplikViolationRecord(item: ComplikViolationDto): ViolationRecord {
     host: item.host,
     url: item.url,
     keywords: item.keywords ?? [],
-    status: item.status,
     detectedAt: formatDateTime(item.detected_at),
     description: item.description ?? "暂无说明",
     rawPayload: item.raw_payload ? stringifyJson(item.raw_payload) : undefined,
@@ -214,7 +211,6 @@ function toProcscanViolationRecord(item: ProcscanViolationDto): ViolationRecord 
     labelActionStatus: item.label_action_status,
     labelActionResult: item.label_action_result,
     message: item.message,
-    status: item.status,
     detectedAt: formatDateTime(item.detected_at),
     description: item.message,
     rawPayload: item.raw_payload ? stringifyJson(item.raw_payload) : undefined,

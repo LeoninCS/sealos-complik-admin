@@ -49,7 +49,6 @@ export type ViolationRecord = {
   labelActionStatus?: string;
   labelActionResult?: string;
   message?: string;
-  status: string;
   detectedAt: string;
   description: string;
   rawPayload?: string;
