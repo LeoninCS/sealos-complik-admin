@@ -9,7 +9,7 @@ import (
 
 type ProcscanViolationEvent struct {
 	ID                uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	Namespace         string    `gorm:"size:255;not null;index:idx_procscan_namespace_time,priority:1;index:idx_procscan_namespace_status_time,priority:1" json:"namespace"`
+	Namespace         string    `gorm:"size:255;not null;index:idx_procscan_namespace_time,priority:1" json:"namespace"`
 	PodName           string    `gorm:"size:255;index:idx_procscan_pod_time,priority:1" json:"pod_name,omitempty"`
 	ContainerID       string    `gorm:"size:128;index:idx_procscan_container_time,priority:1" json:"container_id,omitempty"`
 	NodeName          string    `gorm:"size:128;index:idx_procscan_node_time,priority:1" json:"node_name,omitempty"`
@@ -22,8 +22,7 @@ type ProcscanViolationEvent struct {
 	IsIllegal         bool      `gorm:"not null;default:true" json:"is_illegal"`
 	LabelActionStatus string    `gorm:"size:32" json:"label_action_status,omitempty"`
 	LabelActionResult string    `gorm:"type:text" json:"label_action_result,omitempty"`
-	Status            string    `gorm:"size:32;not null;default:open;index:idx_procscan_namespace_status_time,priority:2" json:"status"`
-	DetectedAt        time.Time `gorm:"not null;index:idx_procscan_namespace_time,priority:2;index:idx_procscan_namespace_status_time,priority:3;index:idx_procscan_pod_time,priority:2;index:idx_procscan_process_time,priority:2;index:idx_procscan_container_time,priority:2;index:idx_procscan_node_time,priority:2" json:"detected_at"`
+	DetectedAt        time.Time `gorm:"not null;index:idx_procscan_namespace_time,priority:2;index:idx_procscan_pod_time,priority:2;index:idx_procscan_process_time,priority:2;index:idx_procscan_container_time,priority:2;index:idx_procscan_node_time,priority:2" json:"detected_at"`
 	RawPayload        *string   `gorm:"type:json" json:"raw_payload,omitempty"`
 	CreatedAt         time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt         time.Time `gorm:"autoUpdateTime" json:"updated_at"`

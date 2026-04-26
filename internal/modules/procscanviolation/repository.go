@@ -51,21 +51,6 @@ func (r *Repository) ListViolations(ctx context.Context, includeAll bool) ([]Pro
 	return violations, nil
 }
 
-func (r *Repository) UpdateViolationStatus(ctx context.Context, id uint64, status string) error {
-	result := r.db.WithContext(ctx).
-		Model(&ProcscanViolationEvent{}).
-		Where("id = ?", id).
-		Update("status", status)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-
-	return nil
-}
-
 func (r *Repository) DeleteViolationByID(ctx context.Context, id uint64) error {
 	result := r.db.WithContext(ctx).Where("id = ?", id).Delete(&ProcscanViolationEvent{})
 	if result.Error != nil {

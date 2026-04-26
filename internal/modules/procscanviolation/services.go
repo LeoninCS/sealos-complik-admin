@@ -15,8 +15,6 @@ var (
 	ErrViolationNotFound     = errors.New("procscan violation not found")
 )
 
-const defaultStatus = "open"
-
 type Service struct {
 	repository *Repository
 }
@@ -50,7 +48,6 @@ func (s *Service) CreateViolation(ctx context.Context, req CreateViolationReques
 		IsIllegal:         input.IsIllegal,
 		LabelActionStatus: input.LabelActionStatus,
 		LabelActionResult: input.LabelActionResult,
-		Status:            input.Status,
 		DetectedAt:        input.DetectedAt,
 		RawPayload:        rawPayloadJSON,
 	}
@@ -118,19 +115,6 @@ func (s *Service) ListViolations(ctx context.Context, includeAll bool) ([]Violat
 	return responses, nil
 }
 
-func (s *Service) UpdateViolationStatus(ctx context.Context, id uint64, status string) error {
-	trimmedStatus := strings.TrimSpace(status)
-	if id == 0 || (trimmedStatus != "open" && trimmedStatus != "closed") {
-		return ErrViolationInvalidInput
-	}
-
-	if err := s.repository.UpdateViolationStatus(ctx, id, trimmedStatus); err != nil {
-		return translateRepositoryError(err)
-	}
-
-	return nil
-}
-
 func (s *Service) GetViolationStatus(ctx context.Context, namespace string) (*ViolationStatusResponse, error) {
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err
@@ -158,7 +142,6 @@ type normalizedViolationInput struct {
 	IsIllegal         bool
 	LabelActionStatus string
 	LabelActionResult string
-	Status            string
 	DetectedAt        time.Time
 	RawPayload        json.RawMessage
 }
@@ -168,13 +151,9 @@ func normalizeViolationInput(req CreateViolationRequest) (*normalizedViolationIn
 	trimmedProcessName := strings.TrimSpace(req.ProcessName)
 	trimmedProcessCommand := strings.TrimSpace(req.ProcessCommand)
 	trimmedMessage := strings.TrimSpace(req.Message)
-	trimmedStatus := strings.TrimSpace(req.Status)
 
 	if trimmedNamespace == "" || req.PID <= 0 || trimmedProcessName == "" || trimmedProcessCommand == "" || trimmedMessage == "" || req.DetectedAt.IsZero() {
 		return nil, ErrViolationInvalidInput
-	}
-	if trimmedStatus == "" {
-		trimmedStatus = defaultStatus
 	}
 
 	isIllegal := true
@@ -196,7 +175,6 @@ func normalizeViolationInput(req CreateViolationRequest) (*normalizedViolationIn
 		IsIllegal:         isIllegal,
 		LabelActionStatus: strings.TrimSpace(req.LabelActionStatus),
 		LabelActionResult: strings.TrimSpace(req.LabelActionResult),
-		Status:            trimmedStatus,
 		DetectedAt:        req.DetectedAt,
 		RawPayload:        req.RawPayload,
 	}, nil
@@ -257,7 +235,6 @@ func toViolationResponse(violation *ProcscanViolationEvent) *ViolationResponse {
 		IsIllegal:         violation.IsIllegal,
 		LabelActionStatus: violation.LabelActionStatus,
 		LabelActionResult: violation.LabelActionResult,
-		Status:            violation.Status,
 		DetectedAt:        violation.DetectedAt,
 		RawPayload:        parseRawPayload(violation.RawPayload),
 		CreatedAt:         violation.CreatedAt,
