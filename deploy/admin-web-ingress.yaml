@@ -17,7 +17,7 @@ spec:
       containers:
         - name: web
           image: leonincs/complik-admin-web:xcq1
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           resources:
