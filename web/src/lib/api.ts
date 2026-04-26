@@ -63,6 +63,7 @@ type ComplikViolationDto = {
   url?: string;
   keywords?: string[];
   description?: string;
+  is_illegal?: boolean;
   detected_at: string;
   raw_payload?: unknown;
   created_at?: string;
@@ -80,6 +81,7 @@ type ProcscanViolationDto = {
   label_action_status?: string;
   label_action_result?: string;
   message: string;
+  is_illegal?: boolean;
   detected_at: string;
   raw_payload?: unknown;
   created_at?: string;
@@ -122,6 +124,44 @@ function stringifyJson(value: unknown) {
   }
 
   return JSON.stringify(value ?? {}, null, 2);
+}
+
+function readRecord(value: unknown): Record<string, unknown> | undefined {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return undefined;
+}
+
+function readBoolean(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  return undefined;
+}
+
+function isComplikIllegal(item: ComplikViolationDto) {
+  const rawPayload = readRecord(item.raw_payload);
+  const detectorResult = readRecord(rawPayload?.["检测结果"]);
+  return (
+    item.is_illegal ??
+    readBoolean(rawPayload?.is_illegal) ??
+    readBoolean(rawPayload?.IsIllegal) ??
+    readBoolean(detectorResult?.["是否违规"]) ??
+    true
+  );
+}
+
+function isProcscanIllegal(item: ProcscanViolationDto) {
+  const rawPayload = readRecord(item.raw_payload);
+  const processInfo = readRecord(rawPayload?.process_info) ?? readRecord(rawPayload?.["进程信息"]);
+  return (
+    item.is_illegal ??
+    readBoolean(processInfo?.IsIllegal) ??
+    readBoolean(processInfo?.is_illegal) ??
+    readBoolean(processInfo?.["是否违规"]) ??
+    true
+  );
 }
 
 function toConfigRecord(item: ProjectConfigDto): ConfigRecord {
@@ -395,8 +435,8 @@ export async function listViolationRecords() {
   ]);
 
   return [
-    ...complikData.map(toComplikViolationRecord),
-    ...procscanData.map(toProcscanViolationRecord),
+    ...complikData.filter(isComplikIllegal).map(toComplikViolationRecord),
+    ...procscanData.filter(isProcscanIllegal).map(toProcscanViolationRecord),
   ].sort((a, b) => toTimestamp(b.detectedAt) - toTimestamp(a.detectedAt));
 }
 

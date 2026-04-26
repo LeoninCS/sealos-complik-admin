@@ -168,6 +168,9 @@ func normalizeViolationInput(req CreateViolationRequest) (*normalizedViolationIn
 	if req.IsIllegal != nil {
 		isIllegal = *req.IsIllegal
 	}
+	if rawIsIllegal, ok := readIsIllegalFromRawPayload(req.RawPayload); ok {
+		isIllegal = rawIsIllegal
+	}
 
 	return &normalizedViolationInput{
 		Namespace:     trimmedNamespace,
@@ -232,6 +235,37 @@ func marshalRawPayload(payload json.RawMessage) (*string, error) {
 
 	result := string(payload)
 	return &result, nil
+}
+
+func readIsIllegalFromRawPayload(payload json.RawMessage) (bool, bool) {
+	if len(payload) == 0 || !json.Valid(payload) {
+		return false, false
+	}
+
+	var raw map[string]any
+	if err := json.Unmarshal(payload, &raw); err != nil {
+		return false, false
+	}
+	if value, ok := readBool(raw["is_illegal"]); ok {
+		return value, true
+	}
+	if value, ok := readBool(raw["IsIllegal"]); ok {
+		return value, true
+	}
+	if detectorResult, ok := raw["检测结果"].(map[string]any); ok {
+		if value, ok := readBool(detectorResult["是否违规"]); ok {
+			return value, true
+		}
+	}
+
+	return false, false
+}
+
+func readBool(value any) (bool, bool) {
+	if boolValue, ok := value.(bool); ok {
+		return boolValue, true
+	}
+	return false, false
 }
 
 func parseStringSlice(raw *string) []string {

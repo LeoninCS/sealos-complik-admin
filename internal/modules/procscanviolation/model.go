@@ -19,7 +19,7 @@ type ProcscanViolationEvent struct {
 	MatchType         string    `gorm:"size:32" json:"match_type,omitempty"`
 	MatchRule         string    `gorm:"size:255" json:"match_rule,omitempty"`
 	Message           string    `gorm:"type:text;not null" json:"message"`
-	IsIllegal         bool      `gorm:"not null;default:true" json:"is_illegal"`
+	IsIllegal         bool      `gorm:"not null" json:"is_illegal"`
 	LabelActionStatus string    `gorm:"size:32" json:"label_action_status,omitempty"`
 	LabelActionResult string    `gorm:"type:text" json:"label_action_result,omitempty"`
 	DetectedAt        time.Time `gorm:"not null;index:idx_procscan_namespace_time,priority:2;index:idx_procscan_pod_time,priority:2;index:idx_procscan_process_time,priority:2;index:idx_procscan_container_time,priority:2;index:idx_procscan_node_time,priority:2" json:"detected_at"`

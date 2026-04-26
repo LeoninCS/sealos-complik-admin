@@ -21,7 +21,7 @@ type ComplikViolationEvent struct {
 	Keywords      *string   `gorm:"type:json" json:"keywords,omitempty"`
 	Description   string    `gorm:"type:text" json:"description,omitempty"`
 	Explanation   string    `gorm:"type:text" json:"explanation,omitempty"`
-	IsIllegal     bool      `gorm:"not null;default:true" json:"is_illegal"`
+	IsIllegal     bool      `gorm:"not null" json:"is_illegal"`
 	IsTest        bool      `gorm:"not null;default:false" json:"is_test"`
 	Status        string    `gorm:"size:32;not null;default:open;index:idx_complik_namespace_status_time,priority:2" json:"status"`
 	DetectedAt    time.Time `gorm:"not null;index:idx_complik_namespace_time,priority:2;index:idx_complik_namespace_status_time,priority:3;index:idx_complik_detector_time,priority:2;index:idx_complik_host_time,priority:2" json:"detected_at"`
