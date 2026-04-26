@@ -95,6 +95,9 @@ func (s *Service) GetViolations(ctx context.Context, namespace string, includeAl
 
 	responses := make([]ViolationResponse, 0, len(violations))
 	for i := range violations {
+		if !includeAll && !isEffectiveViolation(&violations[i]) {
+			continue
+		}
 		responses = append(responses, *toViolationResponse(&violations[i]))
 	}
 
@@ -109,6 +112,9 @@ func (s *Service) ListViolations(ctx context.Context, includeAll bool) ([]Violat
 
 	responses := make([]ViolationResponse, 0, len(violations))
 	for i := range violations {
+		if !includeAll && !isEffectiveViolation(&violations[i]) {
+			continue
+		}
 		responses = append(responses, *toViolationResponse(&violations[i]))
 	}
 
@@ -120,12 +126,21 @@ func (s *Service) GetViolationStatus(ctx context.Context, namespace string) (*Vi
 		return nil, err
 	}
 
-	violated, err := s.repository.HasViolations(ctx, namespace)
+	violations, err := s.repository.GetViolationsByNamespace(ctx, namespace, false)
 	if err != nil {
+		if errors.Is(translateRepositoryError(err), ErrViolationNotFound) {
+			return &ViolationStatusResponse{Violated: false}, nil
+		}
 		return nil, err
 	}
 
-	return &ViolationStatusResponse{Violated: violated}, nil
+	for i := range violations {
+		if isEffectiveViolation(&violations[i]) {
+			return &ViolationStatusResponse{Violated: true}, nil
+		}
+	}
+
+	return &ViolationStatusResponse{Violated: false}, nil
 }
 
 type normalizedViolationInput struct {
@@ -159,6 +174,9 @@ func normalizeViolationInput(req CreateViolationRequest) (*normalizedViolationIn
 	isIllegal := true
 	if req.IsIllegal != nil {
 		isIllegal = *req.IsIllegal
+	}
+	if rawIsIllegal, ok := readIsIllegalFromRawPayload(req.RawPayload); ok {
+		isIllegal = rawIsIllegal
 	}
 
 	return &normalizedViolationInput{
@@ -219,6 +237,55 @@ func parseRawPayload(raw *string) json.RawMessage {
 	return json.RawMessage(*raw)
 }
 
+func readIsIllegalFromRawPayload(payload json.RawMessage) (bool, bool) {
+	if len(payload) == 0 || !json.Valid(payload) {
+		return false, false
+	}
+
+	var raw map[string]any
+	if err := json.Unmarshal(payload, &raw); err != nil {
+		return false, false
+	}
+	if processInfo, ok := raw["进程信息"].(map[string]any); ok {
+		if value, ok := readBool(processInfo["是否违规"]); ok {
+			return value, true
+		}
+	}
+	if processInfo, ok := raw["process_info"].(map[string]any); ok {
+		if value, ok := readBool(processInfo["IsIllegal"]); ok {
+			return value, true
+		}
+		if value, ok := readBool(processInfo["is_illegal"]); ok {
+			return value, true
+		}
+	}
+	if value, ok := readBool(raw["is_illegal"]); ok {
+		return value, true
+	}
+	if value, ok := readBool(raw["IsIllegal"]); ok {
+		return value, true
+	}
+
+	return false, false
+}
+
+func readBool(value any) (bool, bool) {
+	if boolValue, ok := value.(bool); ok {
+		return boolValue, true
+	}
+	return false, false
+}
+
+func isEffectiveViolation(violation *ProcscanViolationEvent) bool {
+	if violation == nil {
+		return false
+	}
+	if rawIsIllegal, ok := readIsIllegalFromRawPayload(parseRawPayload(violation.RawPayload)); ok {
+		return rawIsIllegal
+	}
+	return violation.IsIllegal
+}
+
 func toViolationResponse(violation *ProcscanViolationEvent) *ViolationResponse {
 	return &ViolationResponse{
 		ID:                violation.ID,
@@ -232,7 +299,7 @@ func toViolationResponse(violation *ProcscanViolationEvent) *ViolationResponse {
 		MatchType:         violation.MatchType,
 		MatchRule:         violation.MatchRule,
 		Message:           violation.Message,
-		IsIllegal:         violation.IsIllegal,
+		IsIllegal:         isEffectiveViolation(violation),
 		LabelActionStatus: violation.LabelActionStatus,
 		LabelActionResult: violation.LabelActionResult,
 		DetectedAt:        violation.DetectedAt,

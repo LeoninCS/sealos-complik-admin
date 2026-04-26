@@ -144,10 +144,10 @@ function isComplikIllegal(item: ComplikViolationDto) {
   const rawPayload = readRecord(item.raw_payload);
   const detectorResult = readRecord(rawPayload?.["检测结果"]);
   return (
-    item.is_illegal ??
-    readBoolean(rawPayload?.is_illegal) ??
-    readBoolean(rawPayload?.IsIllegal) ??
     readBoolean(detectorResult?.["是否违规"]) ??
+    readBoolean(rawPayload?.IsIllegal) ??
+    readBoolean(rawPayload?.is_illegal) ??
+    item.is_illegal ??
     true
   );
 }
@@ -156,10 +156,10 @@ function isProcscanIllegal(item: ProcscanViolationDto) {
   const rawPayload = readRecord(item.raw_payload);
   const processInfo = readRecord(rawPayload?.process_info) ?? readRecord(rawPayload?.["进程信息"]);
   return (
-    item.is_illegal ??
+    readBoolean(processInfo?.["是否违规"]) ??
     readBoolean(processInfo?.IsIllegal) ??
     readBoolean(processInfo?.is_illegal) ??
-    readBoolean(processInfo?.["是否违规"]) ??
+    item.is_illegal ??
     true
   );
 }

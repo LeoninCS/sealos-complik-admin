@@ -10,19 +10,48 @@ type Repository struct {
 	db *gorm.DB
 }
 
+const procscanEffectiveViolationCondition = `
+(
+	JSON_UNQUOTE(JSON_EXTRACT(raw_payload, '$."进程信息"."是否违规"')) = 'true'
+	OR JSON_UNQUOTE(JSON_EXTRACT(raw_payload, '$.process_info.IsIllegal')) = 'true'
+	OR JSON_UNQUOTE(JSON_EXTRACT(raw_payload, '$.process_info.is_illegal')) = 'true'
+	OR JSON_UNQUOTE(JSON_EXTRACT(raw_payload, '$.is_illegal')) = 'true'
+	OR JSON_UNQUOTE(JSON_EXTRACT(raw_payload, '$.IsIllegal')) = 'true'
+	OR (
+		JSON_EXTRACT(raw_payload, '$."进程信息"."是否违规"') IS NULL
+		AND JSON_EXTRACT(raw_payload, '$.process_info.IsIllegal') IS NULL
+		AND JSON_EXTRACT(raw_payload, '$.process_info.is_illegal') IS NULL
+		AND JSON_EXTRACT(raw_payload, '$.is_illegal') IS NULL
+		AND JSON_EXTRACT(raw_payload, '$.IsIllegal') IS NULL
+		AND is_illegal = TRUE
+	)
+)
+`
+
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{db: db}
 }
 
 func (r *Repository) CreateViolation(ctx context.Context, violation *ProcscanViolationEvent) error {
-	return r.db.WithContext(ctx).Create(violation).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(violation).Error; err != nil {
+			return err
+		}
+		if !violation.IsIllegal {
+			return tx.Model(&ProcscanViolationEvent{}).
+				Where("id = ?", violation.ID).
+				Update("is_illegal", false).Error
+		}
+
+		return nil
+	})
 }
 
 func (r *Repository) GetViolationsByNamespace(ctx context.Context, namespace string, includeAll bool) ([]ProcscanViolationEvent, error) {
 	var violations []ProcscanViolationEvent
 	query := r.db.WithContext(ctx).Where("namespace = ?", namespace)
 	if !includeAll {
-		query = query.Where("is_illegal = ?", true)
+		query = query.Where(procscanEffectiveViolationCondition)
 	}
 
 	if err := query.
@@ -41,7 +70,7 @@ func (r *Repository) ListViolations(ctx context.Context, includeAll bool) ([]Pro
 	var violations []ProcscanViolationEvent
 	query := r.db.WithContext(ctx)
 	if !includeAll {
-		query = query.Where("is_illegal = ?", true)
+		query = query.Where(procscanEffectiveViolationCondition)
 	}
 
 	if err := query.Order("detected_at DESC, id DESC").Find(&violations).Error; err != nil {
@@ -73,17 +102,4 @@ func (r *Repository) DeleteViolationsByNamespace(ctx context.Context, namespace 
 	}
 
 	return nil
-}
-
-func (r *Repository) HasViolations(ctx context.Context, namespace string) (bool, error) {
-	var count int64
-	if err := r.db.WithContext(ctx).
-		Model(&ProcscanViolationEvent{}).
-		Where("namespace = ?", namespace).
-		Where("is_illegal = ?", true).
-		Count(&count).Error; err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
 }

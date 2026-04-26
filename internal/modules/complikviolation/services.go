@@ -104,6 +104,9 @@ func (s *Service) GetViolations(ctx context.Context, namespace string, includeAl
 
 	responses := make([]ViolationResponse, 0, len(violations))
 	for i := range violations {
+		if !includeAll && !isEffectiveViolation(&violations[i]) {
+			continue
+		}
 		responses = append(responses, *toViolationResponse(&violations[i]))
 	}
 
@@ -118,6 +121,9 @@ func (s *Service) ListViolations(ctx context.Context, includeAll bool) ([]Violat
 
 	responses := make([]ViolationResponse, 0, len(violations))
 	for i := range violations {
+		if !includeAll && !isEffectiveViolation(&violations[i]) {
+			continue
+		}
 		responses = append(responses, *toViolationResponse(&violations[i]))
 	}
 
@@ -129,12 +135,21 @@ func (s *Service) GetViolationStatus(ctx context.Context, namespace string) (*Vi
 		return nil, err
 	}
 
-	violated, err := s.repository.HasViolations(ctx, namespace)
+	violations, err := s.repository.GetViolationsByNamespace(ctx, namespace, false)
 	if err != nil {
+		if errors.Is(translateRepositoryError(err), ErrViolationNotFound) {
+			return &ViolationStatusResponse{Violated: false}, nil
+		}
 		return nil, err
 	}
 
-	return &ViolationStatusResponse{Violated: violated}, nil
+	for i := range violations {
+		if isEffectiveViolation(&violations[i]) {
+			return &ViolationStatusResponse{Violated: true}, nil
+		}
+	}
+
+	return &ViolationStatusResponse{Violated: false}, nil
 }
 
 type normalizedViolationInput struct {
@@ -268,6 +283,16 @@ func readBool(value any) (bool, bool) {
 	return false, false
 }
 
+func isEffectiveViolation(violation *ComplikViolationEvent) bool {
+	if violation == nil {
+		return false
+	}
+	if rawIsIllegal, ok := readIsIllegalFromRawPayload(parseRawPayload(violation.RawPayload)); ok {
+		return rawIsIllegal
+	}
+	return violation.IsIllegal
+}
+
 func parseStringSlice(raw *string) []string {
 	if raw == nil || *raw == "" {
 		return nil
@@ -304,7 +329,7 @@ func toViolationResponse(violation *ComplikViolationEvent) *ViolationResponse {
 		Keywords:      parseStringSlice(violation.Keywords),
 		Description:   violation.Description,
 		Explanation:   violation.Explanation,
-		IsIllegal:     violation.IsIllegal,
+		IsIllegal:     isEffectiveViolation(violation),
 		IsTest:        violation.IsTest,
 		DetectedAt:    violation.DetectedAt,
 		RawPayload:    parseRawPayload(violation.RawPayload),

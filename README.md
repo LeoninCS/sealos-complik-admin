@@ -42,7 +42,6 @@ Administrative backend service for managing project configuration and user compl
 |   |   |-- procscanviolation/
 |   |   |-- projectconfig/
 |   |   |-- unban/
-|   |   `-- violation/
 |   `-- router/              # HTTP route registration
 |-- test/postman.json        # Postman collection
 |-- Dockerfile
@@ -55,7 +54,6 @@ Administrative backend service for managing project configuration and user compl
 - `commitment`: manage uploaded commitment files and download streaming
 - `complikviolation`: store and query CompliK content violation events
 - `procscanviolation`: store and query Procscan process violation events
-- `violation`: legacy generic violation APIs kept for compatibility
 - `ban`: manage ban history, markdown reasons, screenshot upload, and screenshot proxy preview
 - `unban`: track unban actions
 
@@ -174,11 +172,6 @@ If MySQL is not running inside the same network as the container, update `config
 | `DELETE` | `/api/procscan-violations/id/:id` | Delete Procscan event by id |
 | `DELETE` | `/api/procscan-violations/:namespace` | Delete Procscan events by namespace |
 | `GET` | `/api/namespaces/:namespace/procscan-violations-status` | Check whether a namespace has Procscan illegal events |
-| `POST` | `/api/violations` | Create violation record |
-| `GET` | `/api/violations` | List violation records |
-| `GET` | `/api/violations/:namespace` | Get violations by namespace |
-| `DELETE` | `/api/violations/:namespace` | Delete violations by namespace |
-| `GET` | `/api/namespaces/:namespace/violations-status` | Check whether a namespace has violations |
 | `POST` | `/api/bans` | Create ban record |
 | `POST` | `/api/bans/upload` | Create ban record with screenshot upload |
 | `GET` | `/api/bans/screenshots` | Proxy preview for ban screenshots |
@@ -419,11 +412,6 @@ docker run --rm -p 8080:8080 sealos-complik-admin
 | `DELETE` | `/api/procscan-violations/id/:id` | 按 id 删除 Procscan 事件 |
 | `DELETE` | `/api/procscan-violations/:namespace` | 按 namespace 删除 Procscan 事件 |
 | `GET` | `/api/namespaces/:namespace/procscan-violations-status` | 查询 namespace 是否存在 Procscan 违规事件 |
-| `POST` | `/api/violations` | 创建违规记录 |
-| `GET` | `/api/violations` | 查询违规记录列表 |
-| `GET` | `/api/violations/:namespace` | 按 namespace 查询违规记录 |
-| `DELETE` | `/api/violations/:namespace` | 删除 namespace 违规记录 |
-| `GET` | `/api/namespaces/:namespace/violations-status` | 查询 namespace 是否有违规记录 |
 | `POST` | `/api/bans` | 创建封禁记录 |
 | `POST` | `/api/bans/upload` | 上传截图并创建封禁记录 |
 | `GET` | `/api/bans/screenshots` | admin 代理预览封禁截图 |

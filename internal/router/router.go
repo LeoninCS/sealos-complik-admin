@@ -10,7 +10,6 @@ import (
 	"sealos-complik-admin/internal/modules/procscanviolation"
 	"sealos-complik-admin/internal/modules/projectconfig"
 	"sealos-complik-admin/internal/modules/unban"
-	"sealos-complik-admin/internal/modules/violation"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +26,6 @@ func InitRouter(cfg *config.Config) (*gin.Engine, error) {
 	projectconfig.InitProjectConfigRoutes(g)
 	procscanviolation.InitRoutes(g)
 	unban.InitUnbanRoutes(g)
-	violation.InitViolationRoutes(g)
 
 	return g, nil
 }
