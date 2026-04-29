@@ -3,6 +3,8 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	yaml "github.com/goccy/go-yaml"
 )
@@ -16,6 +18,7 @@ const (
 	defaultDBName     = "sealos-complik-admin"
 	defaultDBPassword = "123456"
 	defaultOSSPrefix  = "commitments"
+	defaultAuthRealm  = "CompliK Admin"
 )
 
 type DatabaseConfig struct {
@@ -35,11 +38,19 @@ type OSSConfig struct {
 	ObjectPrefix    string `yaml:"object_prefix"`
 }
 
+type AuthConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Realm    string `yaml:"realm"`
+}
+
 type Config struct {
 	Port     int            `yaml:"port"`
 	LogDir   string         `yaml:"log_dir"`
 	Database DatabaseConfig `yaml:"database"`
 	OSS      OSSConfig      `yaml:"oss"`
+	Auth     AuthConfig     `yaml:"auth"`
 }
 
 // LoadConfig loads the configuration from the specified YAML file and environment variables.
@@ -58,11 +69,15 @@ func LoadConfig(configFile string) *Config {
 		OSS: OSSConfig{
 			ObjectPrefix: defaultOSSPrefix,
 		},
+		Auth: AuthConfig{
+			Realm: defaultAuthRealm,
+		},
 	}
 	// Load base config from file
 	if err := loadConfigInto(configFile, cfg, false); err != nil {
 		log.Printf("read config file %q failed: %v, using default config", configFile, err)
 	}
+	applyEnvOverrides(cfg)
 
 	return cfg
 }
@@ -82,4 +97,31 @@ func loadConfigInto(configFile string, cfg *Config, optional bool) error {
 	}
 
 	return nil
+}
+
+func applyEnvOverrides(cfg *Config) {
+	if cfg == nil {
+		return
+	}
+
+	if value := strings.TrimSpace(os.Getenv("ADMIN_BASIC_AUTH_ENABLED")); value != "" {
+		enabled, err := strconv.ParseBool(value)
+		if err != nil {
+			log.Printf("parse ADMIN_BASIC_AUTH_ENABLED failed: %v", err)
+		} else {
+			cfg.Auth.Enabled = enabled
+		}
+	}
+	if value := strings.TrimSpace(os.Getenv("ADMIN_BASIC_AUTH_USERNAME")); value != "" {
+		cfg.Auth.Username = value
+	}
+	if value := strings.TrimSpace(os.Getenv("ADMIN_BASIC_AUTH_PASSWORD")); value != "" {
+		cfg.Auth.Password = value
+	}
+	if value := strings.TrimSpace(os.Getenv("ADMIN_BASIC_AUTH_REALM")); value != "" {
+		cfg.Auth.Realm = value
+	}
+	if strings.TrimSpace(cfg.Auth.Realm) == "" {
+		cfg.Auth.Realm = defaultAuthRealm
+	}
 }

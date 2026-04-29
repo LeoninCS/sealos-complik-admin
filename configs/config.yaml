@@ -14,6 +14,12 @@ database:
 ## Logging settings
 log_dir: logs
 
+auth:
+  enabled: false
+  username: admin
+  password: changeme
+  realm: CompliK Admin
+
 oss:
   endpoint: oss-cn-hangzhou.aliyuncs.com
   bucket: your-bucket-name

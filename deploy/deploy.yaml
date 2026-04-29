@@ -16,6 +16,10 @@ data:
 
     log_dir: logs
 
+    auth:
+      enabled: true
+      realm: CompliK Admin
+
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -49,6 +53,16 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: sealos-complik-admin-db
+                  key: password
+            - name: ADMIN_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: sealos-complik-admin-auth
+                  key: username
+            - name: ADMIN_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sealos-complik-admin-auth
                   key: password
           ports:
             - containerPort: 8080

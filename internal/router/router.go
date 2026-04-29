@@ -1,9 +1,12 @@
 package router
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"sealos-complik-admin/internal/infra/config"
+	"sealos-complik-admin/internal/middleware"
 	"sealos-complik-admin/internal/modules/ban"
 	"sealos-complik-admin/internal/modules/commitment"
 	"sealos-complik-admin/internal/modules/complikviolation"
@@ -17,6 +20,13 @@ import (
 func InitRouter(cfg *config.Config) (*gin.Engine, error) {
 	g := gin.Default()
 	g.GET("/health", HealthCheck)
+
+	if cfg.Auth.Enabled {
+		if strings.TrimSpace(cfg.Auth.Username) == "" || strings.TrimSpace(cfg.Auth.Password) == "" {
+			return nil, errors.New("basic auth username and password are required")
+		}
+		g.Use(middleware.BasicAuth(cfg.Auth))
+	}
 
 	ban.InitBanRoutes(g, cfg)
 	complikviolation.InitRoutes(g)
