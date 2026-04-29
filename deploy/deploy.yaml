@@ -14,8 +14,6 @@ data:
       port: 3306
       name: sealos-complik-admin
 
-    log_dir: logs
-
     auth:
       enabled: true
       realm: CompliK Admin

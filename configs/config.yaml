@@ -11,9 +11,6 @@ database:
   password: 123456
   name: sealos-complik-admin
 
-## Logging settings
-log_dir: logs
-
 auth:
   enabled: false
   username: admin

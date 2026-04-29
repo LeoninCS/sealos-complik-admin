@@ -34,7 +34,7 @@ Administrative backend service for managing project configuration and user compl
 |-- cmd/                     # Application entrypoint
 |-- configs/                 # YAML configuration files
 |-- internal/
-|   |-- infra/               # Config, logger, database, migration
+|   |-- infra/               # Config, database, migration
 |   |-- modules/             # Domain modules
 |   |   |-- ban/
 |   |   |-- complikviolation/
@@ -89,8 +89,6 @@ database:
   password: sealos123
   name: sealos-complik-admin
 
-log_dir: logs
-
 oss:
   endpoint: http://minio.objectstorage-system.svc.cluster.local
   bucket: sealos-complik-admin
@@ -104,7 +102,6 @@ Notes:
 
 - Tables are auto-migrated at startup.
 - The application does not create the MySQL database itself.
-- Logs are written to the directory configured by `log_dir`.
 - `oss.endpoint` uses an S3-compatible endpoint such as MinIO.
 - `oss.object_prefix` is used for commitment and ban screenshot object keys.
 - Ban screenshots support admin-side proxy preview through `/api/bans/screenshots`.
@@ -329,8 +326,6 @@ database:
   password: sealos123
   name: sealos-complik-admin
 
-log_dir: logs
-
 oss:
   endpoint: http://minio.objectstorage-system.svc.cluster.local
   bucket: sealos-complik-admin
@@ -344,7 +339,6 @@ oss:
 
 - 服务启动时会自动执行数据表迁移。
 - 应用不会自动创建 MySQL 数据库本身。
-- 日志会写入 `log_dir` 指定的目录。
 - `oss.endpoint` 使用兼容 S3 的对象存储地址。
 - `oss.object_prefix` 用于承诺书和封禁截图对象路径前缀。
 - 封禁截图支持通过 `/api/bans/screenshots` 走 admin 代理预览。

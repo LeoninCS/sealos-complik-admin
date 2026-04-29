@@ -11,7 +11,6 @@ import (
 
 const (
 	defaultPort       = 8080
-	defaultLogDir     = "logs"
 	defaultDBHost     = "localhost"
 	defaultDBPort     = 3306
 	defaultDBUsername = "root"
@@ -47,7 +46,6 @@ type AuthConfig struct {
 
 type Config struct {
 	Port     int            `yaml:"port"`
-	LogDir   string         `yaml:"log_dir"`
 	Database DatabaseConfig `yaml:"database"`
 	OSS      OSSConfig      `yaml:"oss"`
 	Auth     AuthConfig     `yaml:"auth"`
@@ -57,8 +55,7 @@ type Config struct {
 func LoadConfig(configFile string) *Config {
 	// Set default values
 	cfg := &Config{
-		Port:   defaultPort,
-		LogDir: defaultLogDir,
+		Port: defaultPort,
 		Database: DatabaseConfig{
 			Host:     defaultDBHost,
 			Port:     defaultDBPort,

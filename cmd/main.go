@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
 	"sealos-complik-admin/internal/infra/config"
 	"sealos-complik-admin/internal/infra/database"
-	"sealos-complik-admin/internal/infra/logger"
 	"sealos-complik-admin/internal/infra/migration"
 	"sealos-complik-admin/internal/router"
 )
@@ -30,38 +30,25 @@ func resolveConfigFile() string {
 }
 
 func main() {
-	// Load config
-
 	cfg := config.LoadConfig(resolveConfigFile())
 
-	// Initialize logger
-	appLogger, err := logger.New(cfg.LogDir)
-	if err != nil {
-		panic(err)
-	}
-
-	defer appLogger.CloseWithReport()
-
-	// Initialize database connection
 	if _, err := database.Init(cfg.Database); err != nil {
-		appLogger.Fatalf("initialize database: %v", err)
+		log.Fatalf("initialize database: %v", err)
 	}
-	defer database.CloseWithReport(appLogger.Printf)
+	defer database.CloseWithReport(log.Printf)
 
 	if err := migration.AutoMigrate(database.Get()); err != nil {
-		appLogger.Fatalf("auto migrate tables: %v", err)
+		log.Fatalf("auto migrate tables: %v", err)
 	}
 
-	// Initialize router
 	srv, err := router.InitRouter(cfg)
 	if err != nil {
-		appLogger.Fatalf("initialize router: %v", err)
+		log.Fatalf("initialize router: %v", err)
 	}
 	addr := fmt.Sprintf(":%d", cfg.Port)
 
-	// Start server
-	appLogger.Printf("server listening on %s", addr)
+	log.Printf("server listening on %s", addr)
 	if err := srv.Run(addr); err != nil {
-		appLogger.Fatalf("run server: %v", err)
+		log.Fatalf("run server: %v", err)
 	}
 }
