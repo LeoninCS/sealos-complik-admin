@@ -13,12 +13,82 @@ import {
   TextArea,
 } from "../components/ui";
 import { useAppData } from "../contexts/AppDataContext";
-import type { ConfigRecord } from "../types";
+import type { ConfigRecord, CreateConfigInput } from "../types";
+
+type ImportConfigRecord = {
+  config_name?: unknown;
+  configName?: unknown;
+  config_type?: unknown;
+  configType?: unknown;
+  config_value?: unknown;
+  configValue?: unknown;
+  description?: unknown;
+};
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasOwn(record: Record<string, unknown>, key: string) {
+  return Object.prototype.hasOwnProperty.call(record, key);
+}
+
+function readRequiredString(value: unknown, field: string, index: number) {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new Error(`第 ${index + 1} 条配置缺少 ${field}。`);
+  }
+  return value.trim();
+}
+
+function normalizeImportedConfig(value: unknown, index: number): CreateConfigInput {
+  if (!isObjectRecord(value)) {
+    throw new Error(`第 ${index + 1} 条配置必须是 JSON 对象。`);
+  }
+
+  const item = value as ImportConfigRecord;
+  const configName = readRequiredString(item.config_name ?? item.configName, "config_name", index);
+  const configType = readRequiredString(item.config_type ?? item.configType, "config_type", index);
+  const description = typeof item.description === "string" ? item.description.trim() : "";
+
+  const hasSnakeValue = hasOwn(value, "config_value");
+  const hasCamelValue = hasOwn(value, "configValue");
+  if (!hasSnakeValue && !hasCamelValue) {
+    throw new Error(`第 ${index + 1} 条配置缺少 config_value。`);
+  }
+
+  return {
+    configName,
+    configType,
+    description,
+    value: JSON.stringify(hasSnakeValue ? item.config_value : item.configValue, null, 2),
+  };
+}
+
+function parseImportedConfigs(source: string): CreateConfigInput[] {
+  if (source.trim() === "") {
+    throw new Error("请粘贴要导入的 JSON。");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source);
+  } catch {
+    throw new Error("导入 JSON 格式不正确，请检查后再提交。");
+  }
+
+  const items = Array.isArray(parsed) ? parsed : [parsed];
+  if (items.length === 0) {
+    throw new Error("导入 JSON 数组不能为空。");
+  }
+
+  return items.map((item, index) => normalizeImportedConfig(item, index));
+}
 
 export function ConfigsPage() {
   const { configRecords, createConfigRecord, updateConfigRecord, deleteConfigRecord } = useAppData();
   const [selected, setSelected] = useState<ConfigRecord | null>(null);
   const [open, setOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [nameKeyword, setNameKeyword] = useState("");
   const [pendingDelete, setPendingDelete] = useState<ConfigRecord | null>(null);
@@ -34,6 +104,9 @@ export function ConfigsPage() {
   const [editValue, setEditValue] = useState('{\n  "enabled": true,\n  "threshold": 3\n}');
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [importValue, setImportValue] = useState("");
+  const [importSubmitting, setImportSubmitting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     return configRecords.filter((item) => {
@@ -89,6 +162,49 @@ export function ConfigsPage() {
       setFormError(null);
     } catch {
       setFormError("JSON 内容格式不正确，无法格式化。");
+    }
+  };
+
+  const formatImportJson = () => {
+    if (!importValue.trim()) {
+      setImportError("导入 JSON 不能为空。");
+      return;
+    }
+    try {
+      const parsed = JSON.parse(importValue);
+      setImportValue(JSON.stringify(parsed, null, 2));
+      setImportError(null);
+    } catch {
+      setImportError("导入 JSON 格式不正确，无法格式化。");
+    }
+  };
+
+  const handleImportConfigs = async () => {
+    let configs: CreateConfigInput[];
+    try {
+      configs = parseImportedConfigs(importValue);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "导入 JSON 格式不正确。");
+      return;
+    }
+
+    setImportSubmitting(true);
+    setImportError(null);
+    try {
+      for (let index = 0; index < configs.length; index += 1) {
+        try {
+          await createConfigRecord(configs[index]);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "导入配置失败";
+          throw new Error(`已导入 ${index} 条，第 ${index + 1} 条失败：${message}`);
+        }
+      }
+      setImportOpen(false);
+      setImportValue("");
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "导入配置失败");
+    } finally {
+      setImportSubmitting(false);
     }
   };
 
@@ -164,7 +280,16 @@ export function ConfigsPage() {
         kicker="Configs"
         title="项目配置"
         description="统一查看配置名、描述和 JSON 内容，新增和编辑保持同一套表单结构。"
-        actions={<Button variant="primary" onClick={() => setOpen(true)}>新增配置</Button>}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              导入 JSON
+            </Button>
+            <Button variant="primary" onClick={() => setOpen(true)}>
+              新增配置
+            </Button>
+          </>
+        }
       />
 
       <SurfaceCard>
@@ -286,6 +411,45 @@ export function ConfigsPage() {
               onClick={() => {
                 setOpen(false);
                 setFormError(null);
+              }}
+            >
+              取消
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        description="粘贴单条配置对象或配置数组，字段使用 config_name、config_type、config_value 和 description。"
+        onClose={() => {
+          setImportOpen(false);
+          setImportError(null);
+        }}
+        open={importOpen}
+        title="导入 JSON"
+      >
+        <div className="panel-stack">
+          <Field label="导入内容">
+            <TextArea
+              className="json-text-area"
+              placeholder={'{\n  "config_name": "complik_model_config",\n  "config_type": "model_runtime",\n  "config_value": {\n    "model": "gpt-5"\n  },\n  "description": "CompliK模型配置"\n}'}
+              value={importValue}
+              onChange={(event) => setImportValue(event.target.value)}
+            />
+          </Field>
+          {importError ? <div className="muted-text" style={{ color: "#b42318" }}>{importError}</div> : null}
+          <div className="button-row">
+            <Button variant="secondary" onClick={formatImportJson}>
+              格式化 JSON
+            </Button>
+            <Button variant="primary" onClick={() => void handleImportConfigs()}>
+              {importSubmitting ? "导入中..." : "导入配置"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setImportOpen(false);
+                setImportError(null);
               }}
             >
               取消
